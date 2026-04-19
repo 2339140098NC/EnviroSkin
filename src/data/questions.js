@@ -83,7 +83,15 @@ export const uploadStep = {
 
 export const intakeSteps = [
   {
-    field: "onsetTiming",
+    key: "zipCode",
+    type: "text",
+    prompt: "What zip code are you in right now?",
+    subtitle: "We use this to pull local UV, air quality, and environmental data.",
+    placeholder: "e.g. 92093",
+    validate: (value) => /^\d{5}$/.test((value || "").trim()),
+  },
+  {
+    key: "recentLocation",
     type: "single",
     prompt: "When did it start?",
     options: ["Within hours", "Within days", "Weeks ago", "Months ago", "Chronic / ongoing", OTHER_OPTION],
