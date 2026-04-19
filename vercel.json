@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/api/analyze",
-      "destination": "https://REPLACE_WITH_HF_SPACE.hf.space/api/analyze"
+      "destination": "https://nillooo0711-enviroskin.hf.space/api/analyze"
     },
     {
       "source": "/api/analyze/(.*)",
-      "destination": "https://REPLACE_WITH_HF_SPACE.hf.space/api/analyze/$1"
+      "destination": "https://nillooo0711-enviroskin.hf.space/api/analyze/$1"
     },
     {
       "source": "/api/(.*)",
-      "destination": "https://REPLACE_WITH_RENDER_SERVICE.onrender.com/api/$1"
+      "destination": "https://enviroskin.onrender.com/api/$1"
     }
   ]
 }
