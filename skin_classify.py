@@ -6,6 +6,22 @@ from transformers import pipeline
 REMOTE_MODEL_ID = "LaurianeMD/vit-skin-disease"
 LOCAL_MODEL_DIR = "models/lauriane-vit-skin-disease"
 
+_classifier = None
+
+
+def _resolve_model(model_ref: str) -> str:
+    if model_ref == LOCAL_MODEL_DIR and not os.path.isdir(model_ref):
+        return REMOTE_MODEL_ID
+    return model_ref
+
+
+def classify(image_path, top_k: int = 5, model: str = LOCAL_MODEL_DIR) -> dict:
+    global _classifier
+    if _classifier is None:
+        _classifier = pipeline("image-classification", model=_resolve_model(model))
+    predictions = _classifier(str(image_path), top_k=top_k)
+    return {p["label"]: float(p["score"]) for p in predictions}
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run skin-condition inference with a Hugging Face model.")
