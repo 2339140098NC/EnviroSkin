@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import BorderGlow from "../components/BorderGlow";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useI18n } from "../i18n/I18nProvider";
 import QuestionOption from "../components/QuestionOption";
 import { initialFormData, intakeSteps, OTHER_OPTION } from "../data/questions";
 
@@ -120,43 +122,44 @@ function sanitizeFormData(nextFormData) {
   return sanitizedFormData;
 }
 
-function formatStepAnswer(step, formData) {
+function formatStepAnswer(step, formData, t) {
   if (step.type === "upload") {
-    return formData.uploadedImageName || "No image uploaded";
+    return formData.uploadedImageName || t("No image uploaded");
   }
 
   const value = formData[step.field];
 
   if (step.type === "multi") {
     if (!Array.isArray(value) || value.length === 0) {
-      return "Not provided";
+      return t("Not provided");
     }
 
-    const parts = value.filter((item) => item !== OTHER_OPTION);
+    const parts = value.filter((item) => item !== OTHER_OPTION).map((item) => t(item));
 
     if (value.includes(OTHER_OPTION) && formData[step.otherTextField]) {
-      parts.push(`Other: ${formData[step.otherTextField]}`);
+      parts.push(`${t("Other")}: ${formData[step.otherTextField]}`);
     }
 
     return parts.join(", ");
   }
 
   if (!value) {
-    return "Not provided";
+    return t("Not provided");
   }
 
   if (value === OTHER_OPTION && step.otherTextField && formData[step.otherTextField]) {
-    return `Other: ${formData[step.otherTextField]}`;
+    return `${t("Other")}: ${formData[step.otherTextField]}`;
   }
 
   if (value === "Yes" && step.followUpField && formData[step.followUpField]) {
-    return `Yes - ${formData[step.followUpField]}`;
+    return `${t("Yes")} - ${formData[step.followUpField]}`;
   }
 
-  return value;
+  return t(value);
 }
 
 function QuestionsPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const previewUrlRef = useRef("");
@@ -185,10 +188,10 @@ function QuestionsPage() {
   const reviewItems = useMemo(
     () =>
       visibleSteps.map((stepConfig) => ({
-        prompt: stepConfig.prompt,
-        answer: formatStepAnswer(stepConfig, formData),
+        prompt: t(stepConfig.prompt),
+        answer: formatStepAnswer(stepConfig, formData, t),
       })),
-    [formData, visibleSteps],
+    [formData, visibleSteps, t],
   );
 
   const payloadPreview = useMemo(
@@ -551,11 +554,11 @@ function QuestionsPage() {
       fields.push(
         <InputField
           key={step.otherTextField}
-          label="Please share your answer."
+          label={t("Please share your answer.")}
           value={formData[step.otherTextField]}
           onChange={(event) => handleTextChange(step.otherTextField, event.target.value)}
           onKeyDown={handleAdvanceOnEnter}
-          placeholder="Add a few words so we can capture the context clearly."
+          placeholder={t("Add a few words so we can capture the context clearly.")}
           multiline={step.type === "multi"}
         />,
       );
@@ -565,14 +568,14 @@ function QuestionsPage() {
       fields.push(
         <InputField
           key={step.followUpField}
-          label={step.followUpPrompt}
+          label={t(step.followUpPrompt)}
           value={formData[step.followUpField]}
           onChange={(event) => handleTextChange(step.followUpField, event.target.value)}
           onKeyDown={handleAdvanceOnEnter}
           placeholder={
             step.followUpRequired === false
-              ? "Optional detail that may help interpret the case."
-              : "Add any detail that may help interpret the exposure safely."
+              ? t("Optional detail that may help interpret the case.")
+              : t("Add any detail that may help interpret the exposure safely.")
           }
           multiline
         />,
@@ -584,10 +587,10 @@ function QuestionsPage() {
 
   const renderQuestionStep = () => (
     <div className="pt-8">
-      <h2 className="text-2xl font-semibold tracking-tight text-ink">{step.prompt}</h2>
+      <h2 className="text-2xl font-semibold tracking-tight text-ink">{t(step.prompt)}</h2>
       {step.subtitle ? (
         <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-          {step.subtitle}
+          {t(step.subtitle)}
         </p>
       ) : null}
 
@@ -601,7 +604,7 @@ function QuestionsPage() {
           return (
             <QuestionOption
               key={option}
-              label={option}
+              label={t(option)}
               isSelected={isSelected}
               onSelect={() =>
                 step.type === "multi"
@@ -622,7 +625,7 @@ function QuestionsPage() {
           disabled={currentStep === 0}
           className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Back
+          {t("Back")}
         </button>
         <button
           type="button"
@@ -630,7 +633,7 @@ function QuestionsPage() {
           disabled={!isCurrentStepValid()}
           className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          Next
+          {t("Next")}
         </button>
       </div>
     </div>
@@ -639,10 +642,10 @@ function QuestionsPage() {
   const renderTextStep = () => (
     <div className="pt-8">
       <h2 className="text-2xl font-semibold tracking-tight text-ink">
-        {step.prompt}
+        {t(step.prompt)}
       </h2>
       {step.subtitle ? (
-        <p className="mt-3 text-base leading-7 text-slate-600">{step.subtitle}</p>
+        <p className="mt-3 text-base leading-7 text-slate-600">{t(step.subtitle)}</p>
       ) : null}
       <div className="mt-6">
         <input
@@ -650,7 +653,7 @@ function QuestionsPage() {
           value={currentValue || ""}
           onChange={(event) => handleTextChange(step.field, event.target.value)}
           onKeyDown={handleAdvanceOnEnter}
-          placeholder={step.placeholder || ""}
+          placeholder={step.placeholder ? t(step.placeholder) : ""}
           inputMode={step.field === "zipCode" ? "numeric" : "text"}
           className="glass-surface-strong w-full rounded-2xl px-5 py-4 text-lg text-ink transition focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100"
         />
@@ -663,7 +666,7 @@ function QuestionsPage() {
           disabled={currentStep === 0}
           className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Back
+          {t("Back")}
         </button>
         <button
           type="button"
@@ -671,7 +674,7 @@ function QuestionsPage() {
           disabled={!isCurrentStepValid()}
           className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          Next
+          {t("Next")}
         </button>
       </div>
     </div>
@@ -714,11 +717,10 @@ function QuestionsPage() {
             <UploadIcon />
           </div>
           <p className="mt-6 text-xl font-semibold tracking-tight text-ink">
-            Drag and drop an image here, or click to browse
+            {t("Drag and drop an image here, or click to browse")}
           </p>
           <p className="mt-3 max-w-lg text-base leading-7 text-slate-600">
-            Accepted file types: jpg, jpeg, png, webp. Use a clear, well-lit photo
-            of the affected area.
+            {t("Accepted file types: jpg, jpeg, png, webp. Use a clear, well-lit photo of the affected area.")}
           </p>
         </button>
 
@@ -730,7 +732,7 @@ function QuestionsPage() {
           <div className="glass-surface mt-6 rounded-[1.5rem] p-4 sm:p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-500">Selected file</p>
+                <p className="text-sm font-medium text-slate-500">{t("Selected file")}</p>
                 <p className="mt-1 break-all text-base font-semibold text-ink">
                   {formData.uploadedImageName}
                 </p>
@@ -741,14 +743,14 @@ function QuestionsPage() {
                   onClick={() => fileInputRef.current?.click()}
                   className="glass-button-secondary rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white/65"
                 >
-                  Replace
+                  {t("Replace")}
                 </button>
                 <button
                   type="button"
                   onClick={handleRemoveImage}
                   className="rounded-full border border-rose-200/80 bg-white/55 px-4 py-2 text-sm font-semibold text-rose-600 backdrop-blur-xl transition hover:bg-rose-50/70"
                 >
-                  Remove
+                  {t("Remove")}
                 </button>
               </div>
             </div>
@@ -757,7 +759,7 @@ function QuestionsPage() {
               <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-white/50 bg-white/45 backdrop-blur-xl">
                 <img
                   src={formData.uploadedImagePreviewUrl}
-                  alt="Selected skin upload preview"
+                  alt={t("Selected skin upload preview")}
                   className="h-64 w-full object-cover"
                 />
               </div>
@@ -772,7 +774,7 @@ function QuestionsPage() {
           onClick={handleBack}
           className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65"
         >
-          Back
+          {t("Back")}
         </button>
         <button
           type="button"
@@ -780,7 +782,7 @@ function QuestionsPage() {
           disabled={!isCurrentStepValid()}
           className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          Next
+          {t("Next")}
         </button>
       </div>
     </div>
@@ -790,11 +792,10 @@ function QuestionsPage() {
     <div className="pt-8">
       <div className="glass-surface-strong rounded-[1.75rem] p-6">
         <h2 className="text-2xl font-semibold tracking-tight text-ink">
-          Review intake before processing
+          {t("Review intake before processing")}
         </h2>
         <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-          Confirm the case details, photo, and structured payload before EnviroSkin
-          moves to prediction results.
+          {t("Confirm the case details, photo, and structured payload before EnviroSkin moves to prediction results.")}
         </p>
       </div>
 
@@ -820,7 +821,7 @@ function QuestionsPage() {
           disabled={isSubmitting}
           className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65"
         >
-          Edit upload step
+          {t("Edit upload step")}
         </button>
         <button
           type="button"
@@ -828,7 +829,7 @@ function QuestionsPage() {
           disabled={isSubmitting}
           className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          {isSubmitting ? "Processing..." : "Process Case"}
+          {isSubmitting ? t("Processing...") : t("Process Case")}
         </button>
       </div>
 
@@ -845,12 +846,15 @@ function QuestionsPage() {
           <Link to="/" className="text-2xl font-semibold tracking-tight text-ink">
             EnviroSkin
           </Link>
-          <Link
-            to="/"
-            className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700"
-          >
-            Back to Home
-          </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link
+              to="/"
+              className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700"
+            >
+              {t("Back to Home")}
+            </Link>
+          </div>
         </div>
 
 
@@ -864,31 +868,29 @@ function QuestionsPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-                  Quick EnviroSkin Intake
+                  {t("Quick EnviroSkin Intake")}
                 </p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-                  Answers help contextualize the skin analysis.
+                  {t("Answers help contextualize the skin analysis.")}
                 </h1>
               </div>
               <div className="glass-surface rounded-full px-4 py-2 text-sm font-semibold text-slate-700">
                 {isComplete
-                  ? "Review complete"
+                  ? t("Review complete")
                   : step.type === "upload"
-                    ? `Final step of ${visibleSteps.length}`
+                    ? `${t("Final step of")} ${visibleSteps.length}`
                     : (
   <>
-    Question
+    {t("Question")}
     <br />
-    {currentStep + 1} of {visibleSteps.length}
+    {currentStep + 1} {t("of")} {visibleSteps.length}
   </>
 )}
               </div>
             </div>
 
             <p className="max-w-2xl text-base leading-7 text-slate-600">
-              Provide timing, symptoms, exposure history, medication context, and a
-              skin photo so EnviroSkin can organize a richer case for downstream
-              review and prediction.
+              {t("Provide timing, symptoms, exposure history, medication context, and a skin photo so EnviroSkin can organize a richer case for downstream review and prediction.")}
             </p>
 
             <div className="h-2 overflow-hidden rounded-full bg-white/55">

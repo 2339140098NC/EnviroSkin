@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import ResultsBorderGlow from "../components/ResultsBorderGlow";
 import UVMap from "../components/maps/UVMap";
 import AirPollutionMap from "../components/maps/AirPollutionMap";
+import { useI18n } from "../i18n/I18nProvider";
 
 function formatCalcofiForPreview(calcofiContext) {
   if (!calcofiContext) {
@@ -68,7 +70,29 @@ function driversFromAnalysis(analysis) {
   });
 }
 
+function translateJsonValues(value, t) {
+  if (typeof value === "string") {
+    return t(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => translateJsonValues(item, t));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [
+        key,
+        translateJsonValues(nestedValue, t),
+      ]),
+    );
+  }
+
+  return value;
+}
+
 function ResultsPage() {
+  const { t } = useI18n();
   const location = useLocation();
   const submission = location.state?.submission;
   const analysis = location.state?.analysis;
@@ -93,7 +117,7 @@ function ResultsPage() {
     () =>
       submission
         ? JSON.stringify(
-            {
+            translateJsonValues({
               ...submission,
               calcofiContext: formatCalcofiForPreview(submission.calcofiContext),
               uploadedImageFile: submission.uploadedImageFile
@@ -104,12 +128,12 @@ function ResultsPage() {
                   }
                 : null,
               analysis,
-            },
+            }, t),
             null,
             2,
           )
         : "",
-    [submission, analysis],
+    [submission, analysis, t],
   );
 
   if (!submission) {
@@ -117,36 +141,35 @@ function ResultsPage() {
       <div className="min-h-screen bg-transparent px-6 py-12">
         <div className="glass-panel mx-auto max-w-3xl rounded-[2rem] p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-            Prediction Results
+            {t("Prediction Results")}
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink">
-            No intake submission found.
+            {t("No intake submission found.")}
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Complete the EnviroSkin intake, upload, and review flow first so we can
-            prepare a prediction-ready summary and results view.
+            {t("Complete the EnviroSkin intake, upload, and review flow first so we can prepare a prediction-ready summary and results view.")}
           </p>
           <Link
             to="/questions"
             className="glass-button mt-8 inline-flex rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105"
           >
-            Start Intake
+            {t("Start Intake")}
           </Link>
         </div>
       </div>
     );
   }
 
-  const conditionName = analysis?.condition_name || "Analysis pending";
+  const conditionName = analysis?.condition_name ? t(analysis.condition_name) : t("Analysis pending");
   const confidence = typeof analysis?.confidence === "number" ? analysis.confidence : 0;
   const confidencePercent = Math.round(confidence * 100);
   const whyFlagged = Array.isArray(analysis?.why_flagged) ? analysis.why_flagged : [];
   const environmentalDrivers = driversFromAnalysis(analysis);
   const insightSections = [
-    { title: "Possible Causes", items: analysis?.causes || [] },
-    { title: "Common Symptoms", items: analysis?.symptoms || [] },
-    { title: "Recommended Care", items: analysis?.treatments || [] },
-    { title: "Risk Factors", items: analysis?.risks || [] },
+    { title: t("Possible Causes"), items: analysis?.causes || [] },
+    { title: t("Common Symptoms"), items: analysis?.symptoms || [] },
+    { title: t("Recommended Care"), items: analysis?.treatments || [] },
+    { title: t("Risk Factors"), items: analysis?.risks || [] },
   ];
 
   return (
@@ -154,20 +177,21 @@ function ResultsPage() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-center justify-between gap-4">
           <Link to="/" className="text-2xl font-semibold tracking-tight text-ink">
-            EnviroSkin
+            {t("EnviroSkin")}
           </Link>
           <div className="flex gap-3">
+            <LanguageSwitcher />
             <Link
               to="/questions"
               className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700"
             >
-              Edit Intake
+              {t("Edit Intake")}
             </Link>
             <Link
               to="/"
               className="glass-button rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
             >
-              Return Home
+              {t("Return Home")}
             </Link>
           </div>
         </div>
@@ -175,17 +199,17 @@ function ResultsPage() {
         <ResultsBorderGlow className="p-6 sm:p-8 lg:p-10">
           <header className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-              Prediction Results
+              {t("Prediction Results")}
             </p>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-              Prediction Results
+              {t("Prediction Results")}
             </h1>
             <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-              This is a possible match based on your inputs. Not a medical diagnosis.
+              {t("This is a possible match based on your inputs. Not a medical diagnosis.")}
             </p>
             {analysis?.explanation ? (
               <p className="mt-4 text-base leading-7 text-slate-600">
-                {analysis.explanation}
+                {t(analysis.explanation)}
               </p>
             ) : null}
           </header>
@@ -194,7 +218,7 @@ function ResultsPage() {
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-                  Primary Match
+                  {t("Primary Match")}
                 </p>
                 <h2 className="mt-4 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
                   {conditionName}
@@ -203,13 +227,13 @@ function ResultsPage() {
                 <div className="glass-surface mt-8 rounded-[1.5rem] p-5">
                   <div className="flex items-end justify-between gap-4">
                     <div>
-                      <p className="text-sm font-medium text-slate-500">Confidence</p>
+                      <p className="text-sm font-medium text-slate-500">{t("Confidence")}</p>
                       <p className="mt-2 text-3xl font-semibold tracking-tight text-ink">
                         {confidencePercent}%
                       </p>
                     </div>
                     <p className="text-sm leading-6 text-slate-500">
-                      Confidence: {confidencePercent}%
+                      {t("Confidence")}: {confidencePercent}%
                     </p>
                   </div>
                   <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/55">
@@ -222,20 +246,20 @@ function ResultsPage() {
 
                 <section className="glass-surface mt-8 rounded-[1.5rem] p-5">
                   <h3 className="text-lg font-semibold tracking-tight text-ink">
-                    Why this was flagged
+                    {t("Why this was flagged")}
                   </h3>
                   {whyFlagged.length > 0 ? (
                     <ul className="mt-4 space-y-3">
                       {whyFlagged.map((item) => (
                         <li key={item} className="flex items-start gap-3">
                           <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
-                          <span className="text-sm leading-6 text-slate-600">{item}</span>
+                          <span className="text-sm leading-6 text-slate-600">{t(item)}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <p className="mt-4 text-sm leading-6 text-slate-500">
-                      No flagging rationale available.
+                      {t("No flagging rationale available.")}
                     </p>
                   )}
                 </section>
@@ -244,25 +268,25 @@ function ResultsPage() {
               <div>
                 <div className="glass-surface rounded-[1.75rem] p-5">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Uploaded Image
+                    {t("Uploaded Image")}
                   </p>
                   {imageUrl ? (
                     <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/45 bg-white/45 shadow-sm backdrop-blur-xl">
                       <img
                         src={imageUrl}
-                        alt="Uploaded skin preview"
+                        alt={t("Uploaded skin preview")}
                         className="h-[26rem] w-full object-cover"
                       />
                     </div>
                   ) : (
                     <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/45 bg-white/45 px-6 py-12 text-center backdrop-blur-xl">
                       <p className="text-sm leading-6 text-slate-500">
-                        No uploaded image preview is available.
+                        {t("No uploaded image preview is available.")}
                       </p>
                     </div>
                   )}
                   <p className="mt-4 text-sm font-medium text-slate-500">
-                    File: {submission.uploadedImageName || "Not available"}
+                    {t("File")}: {submission.uploadedImageName || t("Not available")}
                   </p>
                 </div>
               </div>
@@ -273,10 +297,10 @@ function ResultsPage() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-ink">
-                  Condition Overview
+                  {t("Condition Overview")}
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  A quick 2 by 2 summary of likely causes, symptoms, care, and risk context.
+                  {t("A quick 2 by 2 summary of likely causes, symptoms, care, and risk context.")}
                 </p>
               </div>
             </div>
@@ -295,13 +319,13 @@ function ResultsPage() {
                       {section.items.map((item) => (
                         <li key={item} className="flex items-start gap-3">
                           <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
-                          <span className="text-sm leading-6 text-slate-600">{item}</span>
+                          <span className="text-sm leading-6 text-slate-600">{t(item)}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <p className="mt-4 text-sm leading-6 text-slate-500">
-                      Not available.
+                      {t("Not available.")}
                     </p>
                   )}
                 </section>
@@ -311,20 +335,20 @@ function ResultsPage() {
 
           <section className="glass-surface mx-auto mt-8 max-w-5xl rounded-[1.75rem] p-5 sm:p-6">
             <h2 className="text-xl font-semibold tracking-tight text-ink">
-              Environmental Drivers
+              {t("Environmental Drivers")}
             </h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Larger cards give each environmental signal enough space for a fuller explanation.
+              {t("Larger cards give each environmental signal enough space for a fuller explanation.")}
             </p>
             <div className="mt-5 space-y-5">
               <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
                 <article className="glass-surface overflow-hidden rounded-[1.5rem]">
                   <div className="border-b border-white/40 px-5 py-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                      UV Exposure Map
+                      {t("UV Exposure Map")}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Dedicated space for a future UV intensity map or heat layer.
+                      {t("Dedicated space for a future UV intensity map or heat layer.")}
                     </p>
                   </div>
                   <div className="relative h-72 w-full overflow-hidden">
@@ -339,13 +363,13 @@ function ResultsPage() {
                   />
                   <div className="relative z-10">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                      {environmentalDrivers[0].name}
+                      {t(environmentalDrivers[0].name)}
                     </p>
                     <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
-                      {environmentalDrivers[0].value}
+                      {t(environmentalDrivers[0].value)}
                     </p>
                     <p className="mt-4 text-sm leading-7 text-slate-600">
-                      {environmentalDrivers[0].explanation}
+                      {t(environmentalDrivers[0].explanation)}
                     </p>
                   </div>
                 </article>
@@ -355,10 +379,10 @@ function ResultsPage() {
                 <article className="glass-surface overflow-hidden rounded-[1.5rem]">
                   <div className="border-b border-white/40 px-5 py-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                      Air Quality Map
+                      {t("Air Quality Map")}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Dedicated space for AQI layers, plume overlays, or station-based markers.
+                      {t("Dedicated space for AQI layers, plume overlays, or station-based markers.")}
                     </p>
                   </div>
                   <div className="relative h-72 w-full overflow-hidden">
@@ -372,13 +396,13 @@ function ResultsPage() {
                   />
                   <div className="relative z-10">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                      {environmentalDrivers[2].name}
+                      {t(environmentalDrivers[2].name)}
                     </p>
                     <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
-                      {environmentalDrivers[2].value}
+                      {t(environmentalDrivers[2].value)}
                     </p>
                     <p className="mt-4 text-sm leading-7 text-slate-600">
-                      {environmentalDrivers[2].explanation}
+                      {t(environmentalDrivers[2].explanation)}
                     </p>
                   </div>
                 </article>
@@ -393,13 +417,13 @@ function ResultsPage() {
                       className="glass-surface hover-border-glow-green min-h-[15rem] rounded-[1.5rem] p-6"
                     >
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                        {driver.name}
+                        {t(driver.name)}
                       </p>
                       <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
-                        {driver.value}
+                        {t(driver.value)}
                       </p>
                       <p className="mt-4 text-sm leading-7 text-slate-600">
-                        {driver.explanation}
+                        {t(driver.explanation)}
                       </p>
                     </article>
                   ))}
@@ -411,10 +435,10 @@ function ResultsPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-ink">
-                  Structured Intake Data (Testing Only)
+                  {t("Structured Intake Data (Testing Only)")}
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Developer-facing payload preview for verification and backend handoff.
+                  {t("Developer-facing payload preview for verification and backend handoff.")}
                 </p>
               </div>
               <button
@@ -422,7 +446,7 @@ function ResultsPage() {
                 onClick={() => setShowPayload((current) => !current)}
                 className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-white/65"
               >
-                {showPayload ? "Hide Data" : "Show Data"}
+                {showPayload ? t("Hide Data") : t("Show Data")}
               </button>
             </div>
 

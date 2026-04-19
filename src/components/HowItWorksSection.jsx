@@ -1,9 +1,18 @@
+import { useI18n } from "../i18n/I18nProvider";
+
 function HowItWorksSection() {
+  const { t } = useI18n();
+
   const steps = [
     {
-      title: "Add recent exposure history",
+      title: t("Capture the skin concern"),
       description:
-        "Answer a short intake about sun, ocean, plants, and symptoms to ground the image in real-world context.",
+        t("Upload a clear photo and record when you noticed the change so the model has the right visual context."),
+    },
+    {
+      title: t("Add recent exposure history"),
+      description:
+        t("Answer a short intake about sun, ocean, plants, and symptoms to ground the image in real-world context."),
     },
     {
       title: "Capture the skin concern",
@@ -11,9 +20,9 @@ function HowItWorksSection() {
         "Upload a clear photo and record when you noticed the change so the model has the right visual context.",
     },
     {
-      title: "Receive a safer recommendation",
+      title: t("Receive a safer recommendation"),
       description:
-        "EnviroSkin combines the image and environmental signals to provide a structured next-step recommendation.",
+        t("EnviroSkin combines the image and environmental signals to provide a structured next-step recommendation."),
     },
   ];
 
@@ -30,10 +39,10 @@ function HowItWorksSection() {
         <div className="pointer-events-none absolute bottom-[-5rem] right-[-4rem] h-52 w-52 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="relative z-10 max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-            Workflow
+            {t("Workflow")}
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            A guided intake designed for fast, contextual triage.
+            {t("A guided intake designed for fast, contextual triage.")}
           </h2>
         </div>
 
