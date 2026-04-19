@@ -754,7 +754,13 @@ function QuestionsPage() {
                   ? "Review complete"
                   : step.type === "upload"
                     ? `Final step of ${visibleSteps.length}`
-                    : `Question ${currentStep + 1} of ${visibleSteps.length}`}
+                    : (
+  <>
+    Question
+    <br />
+    {currentStep + 1} of {visibleSteps.length}
+  </>
+)}
               </div>
             </div>
 

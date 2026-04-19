@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import ResultsBorderGlow from "../components/ResultsBorderGlow";
 
 const prediction = {
   name: "Contact Dermatitis",
@@ -281,7 +282,7 @@ function ResultsPage() {
           </div>
         </div>
 
-        <section className="glass-panel rounded-[2rem] p-6 sm:p-8 lg:p-10">
+        <ResultsBorderGlow className="p-6 sm:p-8 lg:p-10">
           <header className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
               Prediction Results
@@ -294,9 +295,9 @@ function ResultsPage() {
             </p>
           </header>
 
-          <div className="glass-surface mx-auto mt-10 max-w-5xl rounded-[2rem] p-6 sm:p-8">
+          <div className="glass-surface results-primary-glow mx-auto mt-10 max-w-5xl rounded-[2rem] p-6 sm:p-8">
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-              <div>
+              <div >
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
                   Primary Match
                 </p>
@@ -383,7 +384,7 @@ function ResultsPage() {
               {insightSections.map((section) => (
                 <section
                   key={section.title}
-                  className="glass-surface rounded-[1.5rem] p-5"
+                  className="glass-surface hover-border-glow rounded-[1.5rem] p-5"
                 >
                   <h3 className="text-lg font-semibold tracking-tight text-ink">
                     {section.title}
@@ -429,16 +430,22 @@ function ResultsPage() {
                   </div>
                 </article>
 
-                <article className="glass-surface min-h-[18rem] rounded-[1.5rem] p-6">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                    {environmentalDrivers[0].name}
-                  </p>
-                  <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
-                    {environmentalDrivers[0].value}
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {environmentalDrivers[0].explanation}
-                  </p>
+                <article className="glass-surface relative min-h-[18rem] overflow-hidden rounded-[1.5rem] p-6">
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_35%),linear-gradient(135deg,_rgba(239,246,255,0.9),_rgba(248,250,252,0.78)_55%,_rgba(224,242,254,0.86))]"
+                  />
+                  <div className="relative z-10">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                      {environmentalDrivers[0].name}
+                    </p>
+                    <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
+                      {environmentalDrivers[0].value}
+                    </p>
+                    <p className="mt-4 text-sm leading-7 text-slate-600">
+                      {environmentalDrivers[0].explanation}
+                    </p>
+                  </div>
                 </article>
               </div>
 
@@ -461,17 +468,22 @@ function ResultsPage() {
                     </div>
                   </div>
                 </article>
-
-                <article className="glass-surface min-h-[18rem] rounded-[1.5rem] p-6">
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                    {environmentalDrivers[2].name}
-                  </p>
-                  <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
-                    {environmentalDrivers[2].value}
-                  </p>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">
-                    {environmentalDrivers[2].explanation}
-                  </p>
+                <article className="glass-surface relative min-h-[18rem] overflow-hidden rounded-[1.5rem] p-6">
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.18),_transparent_35%),linear-gradient(135deg,_rgba(236,254,255,0.9),_rgba(248,250,252,0.78)_55%,_rgba(240,253,250,0.86))]"
+                  />
+                  <div className="relative z-10">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                      {environmentalDrivers[2].name}
+                    </p>
+                    <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
+                      {environmentalDrivers[2].value}
+                    </p>
+                    <p className="mt-4 text-sm leading-7 text-slate-600">
+                      {environmentalDrivers[2].explanation}
+                    </p>
+                  </div>
                 </article>
               </div>
 
@@ -481,7 +493,7 @@ function ResultsPage() {
                   .map((driver) => (
                     <article
                       key={driver.name}
-                      className="glass-surface min-h-[15rem] rounded-[1.5rem] p-6"
+                      className="glass-surface hover-border-glow-green min-h-[15rem] rounded-[1.5rem] p-6"
                     >
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
                         {driver.name}
@@ -523,7 +535,7 @@ function ResultsPage() {
               </pre>
             ) : null}
           </section>
-        </section>
+        </ResultsBorderGlow>
       </div>
     </div>
   );
