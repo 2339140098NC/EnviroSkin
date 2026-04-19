@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/analyze",
+      "destination": "https://REPLACE_WITH_HF_SPACE.hf.space/api/analyze"
+    },
+    {
+      "source": "/api/analyze/(.*)",
+      "destination": "https://REPLACE_WITH_HF_SPACE.hf.space/api/analyze/$1"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "https://REPLACE_WITH_RENDER_SERVICE.onrender.com/api/$1"
+    }
+  ]
+}
