@@ -9,11 +9,16 @@ def select_fetchers(form_data: dict) -> dict:
     ocean_exposure = form_data.get("oceanExposure", "")
     symptoms = form_data.get("symptoms", []) or []
 
+    def _any_in(value, options):
+        if isinstance(value, list):
+            return any(v in options for v in value)
+        return value in options
+
     return {
-        "noaa_uv": sun_exposure in LONG_SUN,
-        "inaturalist": plant_exposure == "Yes" or recent_location in OUTDOOR_LOCATIONS,
-        "epa_aqi": recent_location == "Urban area or city",
-        "ucsd_heat": (sun_exposure and sun_exposure != "Less than 1 hour") or "Burning" in symptoms,
-        "calcofi_spray": ocean_exposure == "Yes" or recent_location == "Beach or outdoors near water",
+        "noaa_uv": True,
+        "inaturalist": plant_exposure == "Yes" or _any_in(recent_location, OUTDOOR_LOCATIONS),
+        "epa_aqi": True,
+        "ucsd_heat": True,
+        "calcofi_spray": ocean_exposure == "Yes" or _any_in(recent_location, {"Beach or outdoors near water", "Beach / outdoors near water"}),
         "snowflake_cluster": True,
     }

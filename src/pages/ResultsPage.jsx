@@ -2,49 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import ResultsBorderGlow from "../components/ResultsBorderGlow";
 
-const prediction = {
-  name: "Contact Dermatitis",
-  confidence: 0.78,
-  causes: [
-    "Recent exposure to irritants",
-    "Environmental allergens",
-    "Skin sensitivity",
-  ],
-  symptoms: ["Redness", "Itching", "Dry or cracked skin"],
-  treatments: [
-    "Apply fragrance-free moisturizer",
-    "Avoid irritants",
-    "Use OTC hydrocortisone",
-  ],
-  risks: ["Outdoor exposure", "Plant contact", "Sensitive skin"],
-};
-
-const fallbackEnvironmentalContext = {
-  uvIndex: {
-    value: 8,
-    level: "high",
-    impact: "High UV may worsen skin irritation and inflammation.",
-  },
-  airQuality: {
-    value: 92,
-    level: "moderate",
-    impact: "Air quality may contribute to irritation in sensitive skin.",
-  },
-  heatHumidity: {
-    temperature: 84,
-    humidity: 71,
-    impact: "Hot and humid conditions may worsen itching and rash formation.",
-  },
-  waterConditions: {
-    level: "elevated risk",
-    impact: "Recent water conditions may increase the chance of irritation after exposure.",
-  },
-  plantLife: {
-    nearbyRisks: ["poison oak", "stinging nettle"],
-    impact: "Nearby irritant plants support a possible contact reaction.",
-  },
-};
-
 function formatCalcofiForPreview(calcofiContext) {
   if (!calcofiContext) {
     return null;
@@ -89,113 +46,30 @@ function formatCalcofiForPreview(calcofiContext) {
   };
 }
 
-function buildWhyFlagged(submission, environmentalContext) {
-  const bullets = [
-    "Your image pattern is currently being treated as more consistent with irritation than a clearly infectious process.",
-  ];
+const DRIVER_META = [
+  { key: "uv_exposure", name: "UV Exposure" },
+  { key: "water_conditions", name: "Water Conditions" },
+  { key: "air_quality", name: "Air Quality" },
+  { key: "plant_exposure", name: "Plant Exposure" },
+  { key: "heat_and_humidity", name: "Heat and Humidity" },
+];
 
-  if (Array.isArray(submission.recentLocation) && submission.recentLocation.length > 0) {
-    bullets.push(
-      `You reported recent exposure across ${submission.recentLocation
-        .filter((item) => item !== "Other")
-        .join(", ")
-        .toLowerCase()}.`,
-    );
-  }
-
-  if (
-    submission.plantExposure === "Yes" ||
-    (environmentalContext.plantLife.nearbyRisks &&
-      environmentalContext.plantLife.nearbyRisks.length > 0)
-  ) {
-    bullets.push(
-      `Nearby irritant plants such as ${environmentalContext.plantLife.nearbyRisks.join(
-        ", ",
-      )} increase the likelihood of contact dermatitis.`,
-    );
-  }
-
-  if (submission.otcOrHerbalUse === "Yes") {
-    bullets.push(
-      "You reported product use on the area, which can increase the chance of a contact or irritant reaction.",
-    );
-  }
-
-  if (
-    environmentalContext.heatHumidity.temperature >= 80 ||
-    environmentalContext.heatHumidity.humidity >= 65
-  ) {
-    bullets.push(
-      "Heat and humidity in your area may worsen inflammation and make irritated skin more reactive.",
-    );
-  }
-
-  if (environmentalContext.uvIndex.value >= 7) {
-    bullets.push(
-      "High local UV exposure may further aggravate skin barrier irritation and visible redness.",
-    );
-  }
-
-  return bullets.slice(0, 5);
-}
-
-function buildTopContributingFactors(predictionName, submission, environmentalContext) {
-  const lowerName = predictionName.toLowerCase();
-
-  if (lowerName.includes("contact dermatitis")) {
-    return [
-      {
-        title: "Plant Exposure",
-        value:
-          submission.plantExposure === "Yes"
-            ? "Reported"
-            : environmentalContext.plantLife.nearbyRisks.join(", "),
-        explanation:
-          "Plant and vegetation contact is one of the strongest contextual signals for a contact reaction.",
-      },
-      {
-        title: "Topical Products",
-        value: submission.otcOrHerbalUse || "Unknown",
-        explanation:
-          "Products applied to the skin can act as irritants or allergens and shift the prediction toward dermatitis.",
-      },
-      {
-        title: "Outdoor Exposure",
-        value: Array.isArray(submission.recentLocation)
-          ? submission.recentLocation.filter((item) => item !== "Other").join(", ") ||
-            "Not reported"
-          : "Not reported",
-        explanation:
-          "Recent outdoor settings can increase contact with irritants, allergens, or sun-related triggers.",
-      },
-      {
-        title: "Heat and Humidity",
-        value: `${environmentalContext.heatHumidity.temperature}°F / ${environmentalContext.heatHumidity.humidity}%`,
-        explanation:
-          "Warm humid conditions can intensify itch, sweat retention, and ongoing inflammation.",
-      },
-    ].slice(0, 4);
-  }
-
-  return [
-    {
-      title: "UV Exposure",
-      value: `${environmentalContext.uvIndex.value}/10`,
-      explanation: environmentalContext.uvIndex.impact,
-    },
-    {
-      title: "Water Conditions",
-      value: environmentalContext.waterConditions.level,
-      explanation: environmentalContext.waterConditions.impact,
-    },
-  ];
+function driversFromAnalysis(analysis) {
+  const drivers = analysis?.environmental_drivers || {};
+  return DRIVER_META.map(({ key, name }) => {
+    const entry = drivers[key] || {};
+    return {
+      name,
+      value: entry.value || "Not available",
+      explanation: entry.explanation || "Local data unavailable for this location.",
+    };
+  });
 }
 
 function ResultsPage() {
   const location = useLocation();
   const submission = location.state?.submission;
-  const environmentalContext =
-    location.state?.environmentalContext || fallbackEnvironmentalContext;
+  const analysis = location.state?.analysis;
   const [imageUrl, setImageUrl] = useState(null);
   const [showPayload, setShowPayload] = useState(false);
 
@@ -227,12 +101,13 @@ function ResultsPage() {
                     size: submission.uploadedImageFile.size,
                   }
                 : null,
+              analysis,
             },
             null,
             2,
           )
         : "",
-    [submission],
+    [submission, analysis],
   );
 
   if (!submission) {
@@ -260,48 +135,16 @@ function ResultsPage() {
     );
   }
 
-  const confidencePercent = Math.round(prediction.confidence * 100);
-  const whyFlagged = buildWhyFlagged(submission, environmentalContext);
-  const environmentalDrivers = [
-    {
-      name: "UV Exposure",
-      value: `${environmentalContext.uvIndex.level} (${environmentalContext.uvIndex.value}/10)`,
-      explanation: environmentalContext.uvIndex.impact,
-    },
-    {
-      name: "Water Conditions",
-      value: environmentalContext.waterConditions.level,
-      explanation: environmentalContext.waterConditions.impact,
-    },
-    {
-      name: "Air Quality",
-      value: `${environmentalContext.airQuality.level} (${environmentalContext.airQuality.value})`,
-      explanation: environmentalContext.airQuality.impact,
-    },
-    {
-      name: "Plant Exposure",
-      value:
-        environmentalContext.plantLife.nearbyRisks.length > 0
-          ? environmentalContext.plantLife.nearbyRisks.join(", ")
-          : "No nearby irritant plants reported",
-      explanation: environmentalContext.plantLife.impact,
-    },
-    {
-      name: "Heat and Humidity",
-      value: `${environmentalContext.heatHumidity.temperature}°F and ${environmentalContext.heatHumidity.humidity}% humidity`,
-      explanation: environmentalContext.heatHumidity.impact,
-    },
-  ];
-  const topFactors = buildTopContributingFactors(
-    prediction.name,
-    submission,
-    environmentalContext,
-  );
+  const conditionName = analysis?.condition_name || "Analysis pending";
+  const confidence = typeof analysis?.confidence === "number" ? analysis.confidence : 0;
+  const confidencePercent = Math.round(confidence * 100);
+  const whyFlagged = Array.isArray(analysis?.why_flagged) ? analysis.why_flagged : [];
+  const environmentalDrivers = driversFromAnalysis(analysis);
   const insightSections = [
-    { title: "Possible Causes", items: prediction.causes },
-    { title: "Common Symptoms", items: prediction.symptoms },
-    { title: "Recommended Care", items: prediction.treatments },
-    { title: "Risk Factors", items: prediction.risks },
+    { title: "Possible Causes", items: analysis?.causes || [] },
+    { title: "Common Symptoms", items: analysis?.symptoms || [] },
+    { title: "Recommended Care", items: analysis?.treatments || [] },
+    { title: "Risk Factors", items: analysis?.risks || [] },
   ];
 
   return (
@@ -338,16 +181,21 @@ function ResultsPage() {
             <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
               This is a possible match based on your inputs. Not a medical diagnosis.
             </p>
+            {analysis?.explanation ? (
+              <p className="mt-4 text-base leading-7 text-slate-600">
+                {analysis.explanation}
+              </p>
+            ) : null}
           </header>
 
           <div className="glass-surface results-primary-glow mx-auto mt-10 max-w-5xl rounded-[2rem] p-6 sm:p-8">
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-              <div >
+              <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
                   Primary Match
                 </p>
                 <h2 className="mt-4 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
-                  {prediction.name}
+                  {conditionName}
                 </h2>
 
                 <div className="glass-surface mt-8 rounded-[1.5rem] p-5">
@@ -374,14 +222,20 @@ function ResultsPage() {
                   <h3 className="text-lg font-semibold tracking-tight text-ink">
                     Why this was flagged
                   </h3>
-                  <ul className="mt-4 space-y-3">
-                    {whyFlagged.map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
-                        <span className="text-sm leading-6 text-slate-600">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {whyFlagged.length > 0 ? (
+                    <ul className="mt-4 space-y-3">
+                      {whyFlagged.map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
+                          <span className="text-sm leading-6 text-slate-600">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-4 text-sm leading-6 text-slate-500">
+                      No flagging rationale available.
+                    </p>
+                  )}
                 </section>
               </div>
 
@@ -434,14 +288,20 @@ function ResultsPage() {
                   <h3 className="text-lg font-semibold tracking-tight text-ink">
                     {section.title}
                   </h3>
-                  <ul className="mt-4 space-y-3">
-                    {section.items.map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
-                        <span className="text-sm leading-6 text-slate-600">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {section.items.length > 0 ? (
+                    <ul className="mt-4 space-y-3">
+                      {section.items.map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
+                          <span className="text-sm leading-6 text-slate-600">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-4 text-sm leading-6 text-slate-500">
+                      Not available.
+                    </p>
+                  )}
                 </section>
               ))}
             </div>

@@ -15,6 +15,10 @@ export default defineConfig({
       ignored: ["**/.venv/**", "**/CalCOFI Data/**", "**/models/**", "**/*.ipynb"],
     },
     proxy: {
+      "/api/analyze": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:8787",
         changeOrigin: true,
