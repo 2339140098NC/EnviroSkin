@@ -41,6 +41,185 @@ body {
     linear-gradient(180deg, #f6fbff 0%, #e6f0f7 100%);
 }
 
+.split-text {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.split-text__segment {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, 1.05rem, 0);
+  filter: blur(10px);
+}
+
+.split-text--ready .split-text__segment {
+  animation: split-text-reveal var(--split-text-duration, 650ms) var(--split-text-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+  animation-delay: var(--split-text-delay, 0ms);
+}
+
+.split-text--static .split-text__segment {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.home-intro-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(129, 204, 255, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(5, 11, 23, 0.94) 0%, rgba(10, 24, 46, 0.84) 48%, rgba(12, 42, 77, 0.76) 100%);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 760ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 760ms step-end;
+}
+
+.home-intro-splash--exit {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.home-intro-splash__ambient,
+.home-intro-splash__glow {
+  position: absolute;
+  pointer-events: none;
+}
+
+.home-intro-splash__ambient {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(141, 214, 255, 0.16), transparent 24%),
+    radial-gradient(circle at 50% 88%, rgba(77, 133, 228, 0.12), transparent 38%);
+}
+
+.home-intro-splash__glow {
+  top: 50%;
+  height: 26rem;
+  width: 26rem;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.6;
+  transform: translateY(-50%);
+}
+
+.home-intro-splash__glow--left {
+  left: -8rem;
+  background: rgba(85, 163, 255, 0.22);
+}
+
+.home-intro-splash__glow--right {
+  right: -8rem;
+  background: rgba(96, 224, 238, 0.18);
+}
+
+.home-intro-splash__panel {
+  position: relative;
+  width: min(100%, 38rem);
+  padding: clamp(2.5rem, 8vw, 4.5rem) clamp(2rem, 7vw, 4rem);
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08)),
+    rgba(239, 248, 255, 0.12);
+  box-shadow:
+    0 28px 90px rgba(4, 12, 28, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.home-intro-splash__panel::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(2rem - 1px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 42%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(186, 221, 255, 0.03));
+  pointer-events: none;
+}
+
+.home-intro-splash__sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(120deg, transparent 16%, rgba(255, 255, 255, 0.28) 34%, transparent 54%);
+  opacity: 0.42;
+  mix-blend-mode: screen;
+  animation: home-intro-sheen 1.8s cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
+  pointer-events: none;
+}
+
+.home-intro-splash__title {
+  position: relative;
+  z-index: 1;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  color: rgba(247, 251, 255, 0.96);
+  font-size: clamp(2.75rem, 11vw, 6rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+  text-align: center;
+  text-shadow: 0 10px 26px rgba(8, 20, 39, 0.28);
+}
+
+@keyframes split-text-reveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.05rem, 0);
+    filter: blur(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@keyframes home-intro-sheen {
+  from {
+    transform: translateX(-20%) translateY(-4%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(18%) translateY(0);
+    opacity: 0.42;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-intro-splash__panel {
+    border-radius: 1.75rem;
+    padding: 2.5rem 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .home-intro-splash,
+  .split-text__segment,
+  .home-intro-splash__sheen {
+    animation: none;
+  }
+
+  .split-text--static .split-text__segment {
+    transition: none;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;
