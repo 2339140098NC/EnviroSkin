@@ -20,7 +20,7 @@ describe("UVMap", () => {
       />,
     );
 
-    expect(screen.getByText("Peak UV")).toBeInTheDocument();
+    expect(screen.getByText("Peak window")).toBeInTheDocument();
     expect(screen.getAllByText("UV 8").length).toBeGreaterThan(0);
     expect(screen.getByText("1:00 PM")).toBeInTheDocument();
     expect(screen.getByText("Readings loaded")).toBeInTheDocument();
