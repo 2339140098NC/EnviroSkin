@@ -44,7 +44,14 @@ function UploadIcon() {
   );
 }
 
-function InputField({ label, value, onChange, placeholder, multiline = false }) {
+function InputField({
+  label,
+  value,
+  onChange,
+  onKeyDown,
+  placeholder,
+  multiline = false,
+}) {
   const baseClassName =
     "mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100";
 
@@ -56,6 +63,7 @@ function InputField({ label, value, onChange, placeholder, multiline = false }) 
           rows="4"
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           className={`${baseClassName} resize-none`}
         />
@@ -64,6 +72,7 @@ function InputField({ label, value, onChange, placeholder, multiline = false }) 
           type="text"
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           className={baseClassName}
         />
@@ -361,6 +370,18 @@ function QuestionsPage() {
     navigate("/results", { state: { submission: formData } });
   };
 
+  const handleAdvanceOnEnter = (event) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (isCurrentStepValid()) {
+      handleNext();
+    }
+  };
+
   const renderSupplementalFields = () => {
     if (step.type === "upload") {
       return null;
@@ -375,6 +396,7 @@ function QuestionsPage() {
           label="Please share your answer."
           value={formData[step.otherTextField]}
           onChange={(event) => handleTextChange(step.otherTextField, event.target.value)}
+          onKeyDown={handleAdvanceOnEnter}
           placeholder="Add a few words so we can capture the context clearly."
           multiline={step.type === "multi"}
         />,
@@ -388,6 +410,7 @@ function QuestionsPage() {
           label={step.followUpPrompt}
           value={formData[step.followUpField]}
           onChange={(event) => handleTextChange(step.followUpField, event.target.value)}
+          onKeyDown={handleAdvanceOnEnter}
           placeholder={
             step.followUpRequired === false
               ? "Optional detail that may help interpret the case."
@@ -468,6 +491,7 @@ function QuestionsPage() {
           type="text"
           value={currentValue || ""}
           onChange={(event) => handleTextChange(step.field, event.target.value)}
+          onKeyDown={handleAdvanceOnEnter}
           placeholder={step.placeholder || ""}
           inputMode={step.field === "zipCode" ? "numeric" : "text"}
           className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-lg text-ink shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"

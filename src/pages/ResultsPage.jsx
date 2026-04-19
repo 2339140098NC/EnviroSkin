@@ -1,85 +1,193 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-const placeholderPredictions = [
-  {
-    label: "Allergic contact dermatitis",
-    probability: 34,
-    note: "Exposure patterns and symptom mix can be compatible with contact-driven inflammation.",
-    guidance:
-      "Consider product or environmental triggers, avoid obvious new exposures, and seek in-person care if the area is rapidly worsening, severe, or involving the face or eyes.",
-  },
-  {
-    label: "Irritant or friction-related rash",
-    probability: 26,
-    note: "Could fit with skin barrier disruption, outdoor exposure, or topical products.",
-    guidance:
-      "Gentle cleansing and avoiding additional irritating products may be reasonable while waiting for clinical review. Escalate if there is pain, spreading redness, or drainage.",
-  },
-  {
-    label: "Medication or topical reaction",
-    probability: 22,
-    note: "Medication history and topical product use can raise this possibility.",
-    guidance:
-      "Bring a list of recent medications and products into follow-up. If there are widespread symptoms, blistering, or systemic illness, urgent medical evaluation may be appropriate.",
-  },
-  {
-    label: "Outdoor or exposure-associated lesion",
-    probability: 18,
-    note: "Recent sun, water, vegetation, or animal exposure may be clinically relevant.",
-    guidance:
-      "Capture when and where the exposure happened, and monitor for progression, itching, pain, or signs of infection while preparing the next clinical step.",
-  },
-];
+const prediction = {
+  name: "Contact Dermatitis",
+  confidence: 0.78,
+  causes: [
+    "Recent exposure to irritants",
+    "Environmental allergens",
+    "Skin sensitivity",
+  ],
+  symptoms: ["Redness", "Itching", "Dry or cracked skin"],
+  treatments: [
+    "Apply fragrance-free moisturizer",
+    "Avoid irritants",
+    "Use OTC hydrocortisone",
+  ],
+  risks: ["Outdoor exposure", "Plant contact", "Sensitive skin"],
+};
 
-function formatResponse(value, otherText, details) {
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return "Not provided";
-    }
+const fallbackEnvironmentalContext = {
+  uvIndex: {
+    value: 8,
+    level: "high",
+    impact: "High UV may worsen skin irritation and inflammation.",
+  },
+  airQuality: {
+    value: 92,
+    level: "moderate",
+    impact: "Air quality may contribute to irritation in sensitive skin.",
+  },
+  heatHumidity: {
+    temperature: 84,
+    humidity: 71,
+    impact: "Hot and humid conditions may worsen itching and rash formation.",
+  },
+  waterConditions: {
+    level: "elevated risk",
+    impact: "Recent water conditions may increase the chance of irritation after exposure.",
+  },
+  plantLife: {
+    nearbyRisks: ["poison oak", "stinging nettle"],
+    impact: "Nearby irritant plants support a possible contact reaction.",
+  },
+};
 
-    const parts = value.filter((item) => item !== "Other");
+function buildWhyFlagged(submission, environmentalContext) {
+  const bullets = [
+    "Your image pattern is currently being treated as more consistent with irritation than a clearly infectious process.",
+  ];
 
-    if (value.includes("Other") && otherText) {
-      parts.push(`Other: ${otherText}`);
-    }
-
-    return parts.join(", ");
+  if (Array.isArray(submission.recentLocation) && submission.recentLocation.length > 0) {
+    bullets.push(
+      `You reported recent exposure across ${submission.recentLocation
+        .filter((item) => item !== "Other")
+        .join(", ")
+        .toLowerCase()}.`,
+    );
   }
 
-  if (!value) {
-    return "Not provided";
+  if (
+    submission.plantExposure === "Yes" ||
+    (environmentalContext.plantLife.nearbyRisks &&
+      environmentalContext.plantLife.nearbyRisks.length > 0)
+  ) {
+    bullets.push(
+      `Nearby irritant plants such as ${environmentalContext.plantLife.nearbyRisks.join(
+        ", ",
+      )} increase the likelihood of contact dermatitis.`,
+    );
   }
 
-  if (value === "Other" && otherText) {
-    return `Other: ${otherText}`;
+  if (submission.otcOrHerbalUse === "Yes") {
+    bullets.push(
+      "You reported product use on the area, which can increase the chance of a contact or irritant reaction.",
+    );
   }
 
-  if (value === "Yes" && details) {
-    return `Yes - ${details}`;
+  if (
+    environmentalContext.heatHumidity.temperature >= 80 ||
+    environmentalContext.heatHumidity.humidity >= 65
+  ) {
+    bullets.push(
+      "Heat and humidity in your area may worsen inflammation and make irritated skin more reactive.",
+    );
   }
 
-  return value;
+  if (environmentalContext.uvIndex.value >= 7) {
+    bullets.push(
+      "High local UV exposure may further aggravate skin barrier irritation and visible redness.",
+    );
+  }
+
+  return bullets.slice(0, 5);
+}
+
+function buildTopContributingFactors(predictionName, submission, environmentalContext) {
+  const lowerName = predictionName.toLowerCase();
+
+  if (lowerName.includes("contact dermatitis")) {
+    return [
+      {
+        title: "Plant Exposure",
+        value:
+          submission.plantExposure === "Yes"
+            ? "Reported"
+            : environmentalContext.plantLife.nearbyRisks.join(", "),
+        explanation:
+          "Plant and vegetation contact is one of the strongest contextual signals for a contact reaction.",
+      },
+      {
+        title: "Topical Products",
+        value: submission.otcOrHerbalUse || "Unknown",
+        explanation:
+          "Products applied to the skin can act as irritants or allergens and shift the prediction toward dermatitis.",
+      },
+      {
+        title: "Outdoor Exposure",
+        value: Array.isArray(submission.recentLocation)
+          ? submission.recentLocation.filter((item) => item !== "Other").join(", ") ||
+            "Not reported"
+          : "Not reported",
+        explanation:
+          "Recent outdoor settings can increase contact with irritants, allergens, or sun-related triggers.",
+      },
+      {
+        title: "Heat and Humidity",
+        value: `${environmentalContext.heatHumidity.temperature}°F / ${environmentalContext.heatHumidity.humidity}%`,
+        explanation:
+          "Warm humid conditions can intensify itch, sweat retention, and ongoing inflammation.",
+      },
+    ].slice(0, 4);
+  }
+
+  return [
+    {
+      title: "UV Exposure",
+      value: `${environmentalContext.uvIndex.value}/10`,
+      explanation: environmentalContext.uvIndex.impact,
+    },
+    {
+      title: "Water Conditions",
+      value: environmentalContext.waterConditions.level,
+      explanation: environmentalContext.waterConditions.impact,
+    },
+  ];
 }
 
 function ResultsPage() {
   const location = useLocation();
   const submission = location.state?.submission;
-  const [expandedGuidance, setExpandedGuidance] = useState(
-    placeholderPredictions[0].label,
-  );
+  const environmentalContext =
+    location.state?.environmentalContext || fallbackEnvironmentalContext;
   const [imageUrl, setImageUrl] = useState(null);
+  const [showPayload, setShowPayload] = useState(false);
 
   useEffect(() => {
     const file = submission?.uploadedImageFile;
+
     if (!file) {
       setImageUrl(null);
       return undefined;
     }
+
     const url = URL.createObjectURL(file);
     setImageUrl(url);
+
     return () => URL.revokeObjectURL(url);
   }, [submission?.uploadedImageFile]);
+
+  const payloadPreview = useMemo(
+    () =>
+      submission
+        ? JSON.stringify(
+            {
+              ...submission,
+              uploadedImageFile: submission.uploadedImageFile
+                ? {
+                    name: submission.uploadedImageFile.name,
+                    type: submission.uploadedImageFile.type,
+                    size: submission.uploadedImageFile.size,
+                  }
+                : null,
+            },
+            null,
+            2,
+          )
+        : "",
+    [submission],
+  );
 
   if (!submission) {
     return (
@@ -93,7 +201,7 @@ function ResultsPage() {
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
             Complete the EnviroSkin intake, upload, and review flow first so we can
-            prepare a prediction-ready summary and guidance view.
+            prepare a prediction-ready summary and results view.
           </p>
           <Link
             to="/questions"
@@ -106,147 +214,49 @@ function ResultsPage() {
     );
   }
 
-  const summaryItems = [
+  const confidencePercent = Math.round(prediction.confidence * 100);
+  const whyFlagged = buildWhyFlagged(submission, environmentalContext);
+  const environmentalDrivers = [
     {
-      label: "Onset timing",
-      value: formatResponse(submission.onsetTiming, submission.onsetTimingOtherText),
+      name: "UV Exposure",
+      value: `${environmentalContext.uvIndex.level} (${environmentalContext.uvIndex.value}/10)`,
+      explanation: environmentalContext.uvIndex.impact,
     },
     {
-      label: "Progression",
-      value: formatResponse(submission.progression, submission.progressionOtherText),
+      name: "Water Conditions",
+      value: environmentalContext.waterConditions.level,
+      explanation: environmentalContext.waterConditions.impact,
     },
     {
-      label: "Previous episodes",
-      value: formatResponse(
-        submission.previousEpisodes,
-        submission.previousEpisodesOtherText,
-      ),
+      name: "Air Quality",
+      value: `${environmentalContext.airQuality.level} (${environmentalContext.airQuality.value})`,
+      explanation: environmentalContext.airQuality.impact,
     },
     {
-      label: "Symptoms",
-      value: formatResponse(submission.symptoms, submission.symptomsOtherText),
+      name: "Plant Exposure",
+      value:
+        environmentalContext.plantLife.nearbyRisks.length > 0
+          ? environmentalContext.plantLife.nearbyRisks.join(", ")
+          : "No nearby irritant plants reported",
+      explanation: environmentalContext.plantLife.impact,
     },
     {
-      label: "Systemic symptoms",
-      value: formatResponse(
-        submission.systemicSymptoms,
-        submission.systemicSymptomsOtherText,
-        submission.systemicSymptomsDetails,
-      ),
-    },
-    {
-      label: "Sick contacts",
-      value: formatResponse(
-        submission.sickContacts,
-        submission.sickContactsOtherText,
-        submission.sickContactsDetails,
-      ),
-    },
-    {
-      label: "Travel history",
-      value: formatResponse(
-        submission.recentTravel,
-        submission.recentTravelOtherText,
-        submission.recentTravelDetails,
-      ),
-    },
-    {
-      label: "Recent locations",
-      value: formatResponse(
-        submission.recentLocation,
-        submission.recentLocationOtherText,
-      ),
-    },
-    {
-      label: "Animal exposure",
-      value: formatResponse(
-        submission.animalExposure,
-        submission.animalExposureOtherText,
-        submission.animalExposureDetails,
-      ),
-    },
-    {
-      label: "Plant exposure",
-      value: formatResponse(
-        submission.plantExposure,
-        submission.plantExposureOtherText,
-        submission.plantExposureDetails,
-      ),
-    },
-    {
-      label: "Water exposure",
-      value: formatResponse(
-        submission.oceanExposure,
-        submission.oceanExposureOtherText,
-        submission.oceanExposureDetails,
-      ),
-    },
-    {
-      label: "Sun exposure",
-      value: formatResponse(submission.sunExposure, submission.sunExposureOtherText),
-    },
-    {
-      label: "Sexual history context",
-      value: formatResponse(
-        submission.sexualHistoryRelevant,
-        submission.sexualHistoryRelevantOtherText,
-        submission.sexualHistoryRelevantDetails,
-      ),
-    },
-    {
-      label: "Immunosuppression or healing concerns",
-      value: formatResponse(
-        submission.immunosuppression,
-        submission.immunosuppressionOtherText,
-        submission.immunosuppressionDetails,
-      ),
-    },
-    {
-      label: "New medications",
-      value: formatResponse(
-        submission.newMedications,
-        submission.newMedicationsOtherText,
-      ),
-    },
-    {
-      label: "Medication types",
-      value: formatResponse(
-        submission.medicationTypes,
-        submission.medicationTypesOtherText,
-      ),
-    },
-    {
-      label: "OTC or herbal products",
-      value: formatResponse(
-        submission.otcOrHerbalUse,
-        submission.otcOrHerbalUseOtherText,
-        submission.otcOrHerbalUseDetails,
-      ),
-    },
-    {
-      label: "Drug reaction history",
-      value: formatResponse(
-        submission.drugReactionHistory,
-        submission.drugReactionHistoryOtherText,
-        submission.drugReactionHistoryDetails,
-      ),
+      name: "Heat and Humidity",
+      value: `${environmentalContext.heatHumidity.temperature}°F and ${environmentalContext.heatHumidity.humidity}% humidity`,
+      explanation: environmentalContext.heatHumidity.impact,
     },
   ];
-
-  const payloadPreview = JSON.stringify(
-    {
-      ...submission,
-      uploadedImageFile: submission.uploadedImageFile
-        ? {
-            name: submission.uploadedImageFile.name,
-            type: submission.uploadedImageFile.type,
-            size: submission.uploadedImageFile.size,
-          }
-        : null,
-    },
-    null,
-    2,
+  const topFactors = buildTopContributingFactors(
+    prediction.name,
+    submission,
+    environmentalContext,
   );
+  const insightSections = [
+    { title: "Possible Causes", items: prediction.causes },
+    { title: "Common Symptoms", items: prediction.symptoms },
+    { title: "Recommended Care", items: prediction.treatments },
+    { title: "Risk Factors", items: prediction.risks },
+  ];
 
   return (
     <div className="min-h-screen bg-transparent px-6 py-10 lg:px-8 lg:py-14">
@@ -271,141 +281,248 @@ function ResultsPage() {
           </div>
         </div>
 
-        <section className="rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-soft backdrop-blur-xl sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-            Prediction Results
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            Top possible causes based on the submitted case.
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-            This page is backend-ready and currently uses placeholder probability
-            outputs for interface development. The complete intake payload and image
-            metadata are already being passed forward in one object.
-          </p>
+        <section className="rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-soft backdrop-blur-xl sm:p-8 lg:p-10">
+          <header className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+              Prediction Results
+            </p>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+              Prediction Results
+            </h1>
+            <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+              This is a possible match based on your inputs. Not a medical diagnosis.
+            </p>
+          </header>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
-              <h2 className="text-xl font-semibold tracking-tight text-ink">
-                Probability graph
-              </h2>
-              <div className="mt-6 space-y-5">
-                {placeholderPredictions.map((prediction) => (
-                  <div key={prediction.label}>
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-base font-semibold text-ink">
-                        {prediction.label}
-                      </p>
-                      <p className="text-sm font-semibold text-blue-600">
-                        {prediction.probability}%
+          <div className="mx-auto mt-10 max-w-5xl rounded-[2rem] border border-slate-200 bg-[#fbfdff] p-6 shadow-card sm:p-8">
+            <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+                  Primary Match
+                </p>
+                <h2 className="mt-4 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+                  {prediction.name}
+                </h2>
+
+                <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">Confidence</p>
+                      <p className="mt-2 text-3xl font-semibold tracking-tight text-ink">
+                        {confidencePercent}%
                       </p>
                     </div>
-                    <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-teal"
-                        style={{ width: `${prediction.probability}%` }}
-                      />
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                      {prediction.note}
+                    <p className="text-sm leading-6 text-slate-500">
+                      Confidence: {confidencePercent}%
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
-              <h2 className="text-xl font-semibold tracking-tight text-ink">
-                Uploaded image
-              </h2>
-              {imageUrl ? (
-                <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-slate-50">
-                  <img
-                    src={imageUrl}
-                    alt="Uploaded skin preview"
-                    className="h-72 w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <p className="mt-4 text-base leading-7 text-slate-600">
-                  No image preview is available.
-                </p>
-              )}
-              <p className="mt-4 text-sm font-medium text-slate-500">
-                File: {submission.uploadedImageName || "Not available"}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
-              <h2 className="text-xl font-semibold tracking-tight text-ink">
-                Expandable care guidance
-              </h2>
-              <div className="mt-5 space-y-3">
-                {placeholderPredictions.map((prediction) => {
-                  const isOpen = expandedGuidance === prediction.label;
-
-                  return (
+                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      key={prediction.label}
-                      className="rounded-2xl border border-slate-200 bg-white"
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedGuidance((current) =>
-                            current === prediction.label ? "" : prediction.label,
-                          )
-                        }
-                        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-                      >
-                        <span className="text-base font-semibold text-ink">
-                          {prediction.label}
-                        </span>
-                        <span className="text-sm font-semibold text-blue-600">
-                          {isOpen ? "Hide" : "Show"}
-                        </span>
-                      </button>
-                      {isOpen ? (
-                        <div className="border-t border-slate-100 px-5 py-4">
-                          <p className="text-sm leading-6 text-slate-600">
-                            {prediction.guidance}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
-              <h2 className="text-xl font-semibold tracking-tight text-ink">
-                Intake summary
-              </h2>
-              <div className="mt-5 grid gap-3">
-                {summaryItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-4"
-                  >
-                    <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                    <p className="mt-1 text-base font-semibold text-ink">{item.value}</p>
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 via-sky-500 to-teal"
+                      style={{ width: `${confidencePercent}%` }}
+                    />
                   </div>
-                ))}
+                </div>
+
+                <section className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold tracking-tight text-ink">
+                    Why this was flagged
+                  </h3>
+                  <ul className="mt-4 space-y-3">
+                    {whyFlagged.map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
+                        <span className="text-sm leading-6 text-slate-600">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+
+              <div>
+                <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Uploaded Image
+                  </p>
+                  {imageUrl ? (
+                    <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 shadow-sm">
+                      <img
+                        src={imageUrl}
+                        alt="Uploaded skin preview"
+                        className="h-[26rem] w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-5 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                      <p className="text-sm leading-6 text-slate-500">
+                        No uploaded image preview is available.
+                      </p>
+                    </div>
+                  )}
+                  <p className="mt-4 text-sm font-medium text-slate-500">
+                    File: {submission.uploadedImageName || "Not available"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+          <section className="mx-auto mt-8 max-w-5xl rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-ink">
+                  Condition Overview
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  A quick 2 by 2 summary of likely causes, symptoms, care, and risk context.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {insightSections.map((section) => (
+                <section
+                  key={section.title}
+                  className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <h3 className="text-lg font-semibold tracking-tight text-ink">
+                    {section.title}
+                  </h3>
+                  <ul className="mt-4 space-y-3">
+                    {section.items.map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" />
+                        <span className="text-sm leading-6 text-slate-600">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </section>
+
+          <section className="mx-auto mt-8 max-w-5xl rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
             <h2 className="text-xl font-semibold tracking-tight text-ink">
-              Structured payload preview
+              Environmental Drivers
             </h2>
-            <pre className="mt-5 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Larger cards give each environmental signal enough space for a fuller explanation.
+            </p>
+            <div className="mt-5 space-y-5">
+              <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                <article className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                      UV Exposure Map
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Dedicated space for a future UV intensity map or heat layer.
+                    </p>
+                  </div>
+                  <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_35%),linear-gradient(135deg,_#eff6ff,_#f8fafc_55%,_#e0f2fe)] px-6 text-center">
+                    <div>
+                      <p className="text-base font-semibold text-ink">Map placeholder</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Use this panel for a UV map focused on the user&apos;s current location.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article className="min-h-[18rem] rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                    {environmentalDrivers[0].name}
+                  </p>
+                  <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
+                    {environmentalDrivers[0].value}
+                  </p>
+                  <p className="mt-4 text-sm leading-7 text-slate-600">
+                    {environmentalDrivers[0].explanation}
+                  </p>
+                </article>
+              </div>
+
+              <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+                <article className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                      Air Quality Map
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Dedicated space for AQI layers, plume overlays, or station-based markers.
+                    </p>
+                  </div>
+                  <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.18),_transparent_35%),linear-gradient(135deg,_#ecfeff,_#f8fafc_55%,_#f0fdfa)] px-6 text-center">
+                    <div>
+                      <p className="text-base font-semibold text-ink">Map placeholder</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Use this panel for local air quality context around the intake location.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article className="min-h-[18rem] rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                    {environmentalDrivers[2].name}
+                  </p>
+                  <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
+                    {environmentalDrivers[2].value}
+                  </p>
+                  <p className="mt-4 text-sm leading-7 text-slate-600">
+                    {environmentalDrivers[2].explanation}
+                  </p>
+                </article>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {environmentalDrivers
+                  .filter((driver) => driver.name !== "UV Exposure" && driver.name !== "Air Quality")
+                  .map((driver) => (
+                    <article
+                      key={driver.name}
+                      className="min-h-[15rem] rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"
+                    >
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
+                        {driver.name}
+                      </p>
+                      <p className="mt-3 text-lg font-semibold tracking-tight text-ink">
+                        {driver.value}
+                      </p>
+                      <p className="mt-4 text-sm leading-7 text-slate-600">
+                        {driver.explanation}
+                      </p>
+                    </article>
+                  ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="mx-auto mt-8 max-w-5xl rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-ink">
+                  Structured Intake Data (Testing Only)
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Developer-facing payload preview for verification and backend handoff.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPayload((current) => !current)}
+                className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                {showPayload ? "Hide Data" : "Show Data"}
+              </button>
+            </div>
+
+            {showPayload ? (
+              <pre className="mt-5 max-h-[28rem] overflow-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
 {payloadPreview}
-            </pre>
-          </div>
+              </pre>
+            ) : null}
+          </section>
         </section>
       </div>
     </div>

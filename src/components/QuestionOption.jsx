@@ -3,6 +3,7 @@ function QuestionOption({ label, isSelected, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
+      aria-pressed={isSelected}
       className={`flex w-full items-center justify-between gap-4 rounded-2xl border px-5 py-4 text-left text-base font-medium transition ${
         isSelected
           ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm"

@@ -93,7 +93,7 @@ export const intakeSteps = [
     validate: (value) => /^\d{5}$/.test((value || "").trim()),
   },
   {
-    key: "recentLocation",
+    field: "onsetTiming",
     type: "single",
     prompt: "When did it start?",
     options: ["Within hours", "Within days", "Weeks ago", "Months ago", "Chronic / ongoing", OTHER_OPTION],
