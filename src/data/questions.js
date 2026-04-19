@@ -1,5 +1,13 @@
 export const intakeSteps = [
   {
+    key: "zipCode",
+    type: "text",
+    prompt: "What zip code are you in right now?",
+    subtitle: "We use this to pull local UV, air quality, and environmental data.",
+    placeholder: "e.g. 92093",
+    validate: (value) => /^\d{5}$/.test((value || "").trim()),
+  },
+  {
     key: "recentLocation",
     type: "single",
     prompt: "Where have you spent most of your time in the last 48 hours?",

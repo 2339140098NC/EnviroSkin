@@ -1,0 +1,22 @@
+{
+  "zipCode": "92093",
+  "recentLocation": "Beach or outdoors near water",
+  "onsetCategory": "After outdoor exposure",
+  "onsetSpecificTiming": "Today",
+  "progression": "Stable",
+  "previousEpisodes": "No",
+  "symptoms": ["Red", "Burning"],
+  "systemicSymptoms": "No",
+  "sickContacts": "No",
+  "recentTravel": "No",
+  "animalExposure": "No",
+  "plantExposure": "No",
+  "oceanExposure": "No",
+  "sunExposure": "3+ hours",
+  "immunosuppression": "No",
+  "newMedications": "No",
+  "medicationTypes": [],
+  "otcOrHerbalUse": "No",
+  "drugReactionHistory": "No",
+  "sexualHistoryRelevant": "No"
+}

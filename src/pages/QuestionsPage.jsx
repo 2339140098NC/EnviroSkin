@@ -4,6 +4,7 @@ import QuestionOption from "../components/QuestionOption";
 import { intakeSteps } from "../data/questions";
 
 const initialFormData = {
+  zipCode: "",
   recentLocation: "",
   onsetCategory: "",
   onsetSpecificTiming: "",
@@ -129,7 +130,21 @@ function QuestionsPage() {
       return Boolean(formData.uploadedImageFile);
     }
 
+    if (step.type === "text") {
+      if (typeof step.validate === "function") {
+        return step.validate(currentValue);
+      }
+      return Boolean((currentValue || "").trim());
+    }
+
     return Boolean(currentValue);
+  };
+
+  const handleTextChange = (value) => {
+    setFormData((previous) => ({
+      ...previous,
+      [step.key]: value,
+    }));
   };
 
   const handleSingleSelect = (value) => {
@@ -297,6 +312,46 @@ function QuestionsPage() {
     </div>
   );
 
+  const renderTextStep = () => (
+    <div className="pt-8">
+      <h2 className="text-2xl font-semibold tracking-tight text-ink">
+        {step.prompt}
+      </h2>
+      {step.subtitle ? (
+        <p className="mt-3 text-base leading-7 text-slate-600">{step.subtitle}</p>
+      ) : null}
+      <div className="mt-6">
+        <input
+          type="text"
+          value={currentValue || ""}
+          onChange={(event) => handleTextChange(event.target.value)}
+          placeholder={step.placeholder || ""}
+          inputMode={step.key === "zipCode" ? "numeric" : "text"}
+          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-lg text-ink shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
+      </div>
+
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+        <button
+          type="button"
+          onClick={handleBack}
+          disabled={currentStep === 0}
+          className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={handleNext}
+          disabled={!isCurrentStepValid()}
+          className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+
   const renderUploadStep = () => (
     <div className="pt-8">
       <h2 className="text-2xl font-semibold tracking-tight text-ink">
@@ -451,7 +506,11 @@ function QuestionsPage() {
           </div>
 
           {!isComplete ? (
-            step.type === "upload" ? renderUploadStep() : renderQuestionStep()
+            step.type === "upload"
+              ? renderUploadStep()
+              : step.type === "text"
+                ? renderTextStep()
+                : renderQuestionStep()
           ) : (
             <div className="pt-8">
               <div className="rounded-[1.75rem] border border-teal/70 bg-gradient-to-br from-[#effcf9] to-[#dff8f2] p-6">
