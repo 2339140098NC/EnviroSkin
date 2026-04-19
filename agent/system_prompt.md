@@ -70,7 +70,7 @@ Return **ONLY** a JSON object. No markdown, no code fences, no text before or af
     },
     "air_quality": {
       "value": "short label like 'Moderate (AQI 92)' or 'Not available'",
-      "explanation": "Two plain sentences on the following questions. What is the Air quality like in the userse area? How does the air quality intensity relate or doesnt relate to the diagnosis?"
+      "explanation": "Two plain sentences on the following questions. What is the Air quality like in the users area? How does the air quality intensity relate or doesnt relate to the diagnosis?"
     },
     "heat_and_humidity": {
       "value": "short label like '84 F and 71% humidity' or 'Not available'",

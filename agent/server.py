@@ -19,7 +19,7 @@ sys.path.insert(0, str(REPO_ROOT))
 load_dotenv(REPO_ROOT / ".env")
 
 from env.context_builder import build_context
-from env.fetchers import noaa_uv
+from env.fetchers import epa_aqi, noaa_uv
 from skin_classify import classify
 
 SYSTEM_PROMPT = (AGENT_DIR / "system_prompt.md").read_text()
@@ -203,6 +203,7 @@ async def analyze(form_data: str = Form(...), image: UploadFile = File(...)):
         context = build_context(form, scores)
         environmental_context = {
             "noaa_uv": noaa_uv.fetch(form.get("zipCode", "")),
+            "epa_aqi": epa_aqi.fetch(form.get("zipCode", "")),
         }
 
         response = client.models.generate_content(
