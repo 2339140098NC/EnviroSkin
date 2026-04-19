@@ -18,21 +18,30 @@ def fetch(zip_code: str, time_window=None) -> dict:
     if not zip_code:
         return {"error": "no zip code provided"}
 
-    try:
-        response = requests.get(
-            "https://www.airnowapi.org/aq/observation/zipCode/current/",
-            params={
-                "format": "application/json",
-                "zipCode": zip_code,
-                "distance": 25,
-                "API_KEY": api_key,
-            },
-            timeout=8,
-        )
-        response.raise_for_status()
-        rows = response.json()
-    except Exception as exc:
-        return {"error": f"AirNow fetch failed: {exc}"}
+    rows = None
+    last_exc = None
+    for attempt in range(2):
+        try:
+            response = requests.get(
+                "https://www.airnowapi.org/aq/observation/zipCode/current/",
+                params={
+                    "format": "application/json",
+                    "zipCode": zip_code,
+                    "distance": 25,
+                    "API_KEY": api_key,
+                },
+                timeout=15,
+            )
+            response.raise_for_status()
+            rows = response.json()
+            break
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            last_exc = exc
+            continue
+        except Exception as exc:
+            return {"error": f"AirNow fetch failed: {exc}"}
+    if rows is None:
+        return {"error": f"AirNow fetch failed: {last_exc}"}
 
     if not rows:
         return {"error": "AirNow returned no observations"}

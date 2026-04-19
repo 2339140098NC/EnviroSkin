@@ -438,6 +438,45 @@ function QuestionsPage() {
       }
     }
 
+    let analysis = null;
+    let analysisError = "";
+
+    try {
+      const imageFile = formData.uploadedImageFile;
+      if (!(imageFile instanceof File)) {
+        throw new Error("No image uploaded.");
+      }
+
+      const { uploadedImageFile, ...formForApi } = formData;
+      const payload = new FormData();
+      payload.append(
+        "form_data",
+        JSON.stringify({ ...formForApi, calcofiContext }),
+      );
+      payload.append("image", imageFile);
+
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        body: payload,
+      });
+
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`Server ${response.status}: ${detail}`);
+      }
+
+      analysis = await response.json();
+    } catch (error) {
+      console.error("Analysis request failed:", error);
+      analysisError =
+        error instanceof Error ? error.message : "Unknown analysis error";
+      setSubmissionError(
+        `Analysis unavailable. ${analysisError}. Make sure the FastAPI server is running.`,
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     navigate("/results", {
       state: {
         submission: {
@@ -446,6 +485,7 @@ function QuestionsPage() {
           calcofiError: calcofiError || undefined,
           calcofiClientVersion,
         },
+        analysis,
       },
     });
   };

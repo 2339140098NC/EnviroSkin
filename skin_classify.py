@@ -15,11 +15,15 @@ def _resolve_model(model_ref: str) -> str:
     return model_ref
 
 
-def classify(image_path, top_k: int = 5, model: str = LOCAL_MODEL_DIR) -> dict:
+def classify(image, top_k: int = 4, model: str = LOCAL_MODEL_DIR) -> dict:
     global _classifier
     if _classifier is None:
         _classifier = pipeline("image-classification", model=_resolve_model(model))
-    predictions = _classifier(str(image_path), top_k=top_k)
+    if hasattr(image, "mode"):
+        arg = image
+    else:
+        arg = str(image)
+    predictions = _classifier(arg, top_k=top_k)
     return {p["label"]: float(p["score"]) for p in predictions}
 
 
