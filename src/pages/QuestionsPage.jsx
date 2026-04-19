@@ -1,33 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import QuestionOption from "../components/QuestionOption";
-import { intakeSteps } from "../data/questions";
-
-const initialFormData = {
-  zipCode: "",
-  recentLocation: "",
-  onsetCategory: "",
-  onsetSpecificTiming: "",
-  progression: "",
-  previousEpisodes: "",
-  symptoms: [],
-  systemicSymptoms: "",
-  sickContacts: "",
-  recentTravel: "",
-  animalExposure: "",
-  plantExposure: "",
-  oceanExposure: "",
-  sunExposure: "",
-  immunosuppression: "",
-  newMedications: "",
-  medicationTypes: [],
-  otcOrHerbalUse: "",
-  drugReactionHistory: "",
-  sexualHistoryRelevant: "",
-  uploadedImageFile: null,
-  uploadedImageName: "",
-  uploadedImagePreviewUrl: "",
-};
+import { initialFormData, intakeSteps, OTHER_OPTION } from "../data/questions";
 
 const uploadStep = {
   key: "uploadedImageFile",
@@ -269,23 +243,9 @@ function QuestionsPage() {
     return Boolean(currentValue);
   };
 
-  const handleTextChange = (value) => {
-    setFormData((previous) => ({
-      ...previous,
-      [step.key]: value,
-    }));
+  const updateFormData = (updater) => {
+    setFormData((previous) => sanitizeFormData(updater(previous)));
   };
-
-  const handleSingleSelect = (value) => {
-    setFormData((previous) => {
-      const nextFormData = {
-        ...previous,
-        [step.key]: value,
-      };
-
-      if (step.key === "newMedications" && value === "No") {
-        nextFormData.medicationTypes = [];
-      }
 
   const handleSingleSelect = (value) => {
     updateFormData((previous) => ({
@@ -296,7 +256,9 @@ function QuestionsPage() {
 
   const handleMultiSelect = (value) => {
     updateFormData((previous) => {
-      const currentItems = previous[step.field];
+      const currentItems = Array.isArray(previous[step.field])
+        ? previous[step.field]
+        : [];
       const nextItems = currentItems.includes(value)
         ? currentItems.filter((item) => item !== value)
         : [...currentItems, value];
@@ -505,9 +467,9 @@ function QuestionsPage() {
         <input
           type="text"
           value={currentValue || ""}
-          onChange={(event) => handleTextChange(event.target.value)}
+          onChange={(event) => handleTextChange(step.field, event.target.value)}
           placeholder={step.placeholder || ""}
-          inputMode={step.key === "zipCode" ? "numeric" : "text"}
+          inputMode={step.field === "zipCode" ? "numeric" : "text"}
           className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-lg text-ink shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
         />
       </div>
@@ -747,68 +709,7 @@ function QuestionsPage() {
                 ? renderTextStep()
                 : renderQuestionStep()
           ) : (
-            <div className="pt-8">
-              <div className="rounded-[1.75rem] border border-teal/70 bg-gradient-to-br from-[#effcf9] to-[#dff8f2] p-6">
-                <h2 className="text-2xl font-semibold tracking-tight text-ink">
-                  Intake captured
-                </h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                  The questionnaire answers and uploaded photo metadata are now
-                  stored together in one structured object, ready for backend
-                  submission and LLM analysis.
-                </p>
-              </div>
-
-              <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-6">
-                <h3 className="text-lg font-semibold text-ink">
-                  Structured response preview
-                </h3>
-                <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
-{JSON.stringify(formData, null, 2)}
-                </pre>
-              </div>
-
-              {formData.uploadedImagePreviewUrl ? (
-                <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-white p-5">
-                  <p className="text-sm font-medium text-slate-500">Uploaded image preview</p>
-                  <div className="mt-4 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-slate-50">
-                    <img
-                      src={formData.uploadedImagePreviewUrl}
-                      alt="Uploaded skin preview"
-                      className="h-72 w-full object-cover"
-                    />
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-6 grid gap-3">
-                {intakeSummary.map((item) => (
-                  <div
-                    key={item.prompt}
-                    className="rounded-2xl border border-slate-200 bg-white px-5 py-4"
-                  >
-                    <p className="text-sm font-medium text-slate-500">{item.prompt}</p>
-                    <p className="mt-1 text-base font-semibold text-ink">{item.answer}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  Edit upload step
-                </button>
-                <Link
-                  to="/"
-                  className="rounded-full bg-blue-500 px-7 py-3 text-center text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
-                >
-                  Return Home
-                </Link>
-              </div>
-            </div>
+            renderReviewStep()
           )}
         </section>
       </div>

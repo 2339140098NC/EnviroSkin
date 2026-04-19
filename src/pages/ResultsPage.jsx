@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const placeholderPredictions = [
@@ -68,6 +68,18 @@ function ResultsPage() {
   const [expandedGuidance, setExpandedGuidance] = useState(
     placeholderPredictions[0].label,
   );
+  const [imageUrl, setImageUrl] = useState(null);
+
+  useEffect(() => {
+    const file = submission?.uploadedImageFile;
+    if (!file) {
+      setImageUrl(null);
+      return undefined;
+    }
+    const url = URL.createObjectURL(file);
+    setImageUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [submission?.uploadedImageFile]);
 
   if (!submission) {
     return (
@@ -306,10 +318,10 @@ function ResultsPage() {
               <h2 className="text-xl font-semibold tracking-tight text-ink">
                 Uploaded image
               </h2>
-              {submission.uploadedImagePreviewUrl ? (
+              {imageUrl ? (
                 <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-slate-50">
                   <img
-                    src={submission.uploadedImagePreviewUrl}
+                    src={imageUrl}
                     alt="Uploaded skin preview"
                     className="h-72 w-full object-cover"
                   />

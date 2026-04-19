@@ -1,6 +1,8 @@
 export const OTHER_OPTION = "Other";
 
 export const initialFormData = {
+  zipCode: "",
+
   onsetTiming: "",
   onsetTimingOtherText: "",
 
@@ -83,7 +85,7 @@ export const uploadStep = {
 
 export const intakeSteps = [
   {
-    key: "zipCode",
+    field: "zipCode",
     type: "text",
     prompt: "What zip code are you in right now?",
     subtitle: "We use this to pull local UV, air quality, and environmental data.",
