@@ -5,7 +5,7 @@ import { HexagonLayer } from "@deck.gl/aggregation-layers";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useHeatmapData } from "./useHeatmapData";
 
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json";
 
 const AQI_COLOR_RANGE = [
   [16, 185, 129],

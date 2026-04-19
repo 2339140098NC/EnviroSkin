@@ -66,11 +66,11 @@ Return **ONLY** a JSON object. No markdown, no code fences, no text before or af
   "environmental_drivers": {
     "uv_exposure": {
       "value": "short label like 'High (8/10)' or 'Not available'",
-      "explanation": "One plain sentence on how UV relates to this case."
+      "explanation": "Two plain sentences on the following questions. What is the UV exposure like in the users area? how does the UV exposure intensity relate or doesnt relate to the diagnosis?"
     },
     "air_quality": {
       "value": "short label like 'Moderate (AQI 92)' or 'Not available'",
-      "explanation": "One plain sentence on how air quality relates."
+      "explanation": "Two plain sentences on the following questions. What is the Air quality like in the userse area? How does the air quality intensity relate or doesnt relate to the diagnosis?"
     },
     "heat_and_humidity": {
       "value": "short label like '84 F and 71% humidity' or 'Not available'",
