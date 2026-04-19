@@ -164,7 +164,10 @@ function QuestionsPage() {
   const [isComplete, setIsComplete] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [submissionError, setSubmissionError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
+  const calcofiClientVersion = "calcofi-fetch-v2";
 
   const visibleSteps = useMemo(() => {
     const questionSteps = intakeSteps.filter(
@@ -367,8 +370,84 @@ function QuestionsPage() {
     setCurrentStep((previous) => Math.max(previous - 1, 0));
   };
 
-  const handleProcessCase = () => {
-    navigate("/results", { state: { submission: formData } });
+  const fetchCalcofiContext = async (zipCode) => {
+    const params = new URLSearchParams({
+      zip: zipCode,
+      rankBy: "balanced",
+    });
+
+    const configuredBaseUrl = (import.meta.env.VITE_API_BASE_URL || "")
+      .trim()
+      .replace(/\/$/, "");
+    const relativePath = `/api/calcofi/context?${params.toString()}`;
+    const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+    const hostFallbackBaseUrl = `${protocol}//${window.location.hostname}:8787`;
+
+    const endpointCandidates = [
+      configuredBaseUrl ? `${configuredBaseUrl}${relativePath}` : relativePath,
+      `${hostFallbackBaseUrl}${relativePath}`,
+      `http://localhost:8787${relativePath}`,
+      `http://127.0.0.1:8787${relativePath}`,
+    ].filter((value, index, array) => value && array.indexOf(value) === index);
+
+    const failedAttempts = [];
+
+    for (const url of endpointCandidates) {
+      try {
+        const response = await fetch(url);
+        const payload = await response.json().catch(() => null);
+
+        if (response.ok) {
+          return payload;
+        }
+
+        failedAttempts.push(`${url} -> HTTP ${response.status}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Network error";
+        failedAttempts.push(`${url} -> ${message}`);
+      }
+    }
+
+    throw new Error(`Unable to fetch CalCOFI context. Tried: ${failedAttempts.join("; ")}`);
+  };
+
+  const handleProcessCase = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmissionError("");
+
+    const zipCode = (formData.zipCode || "").trim();
+    let calcofiContext = null;
+    let calcofiError = "";
+
+    if (/^\d{5}$/.test(zipCode)) {
+      try {
+        calcofiContext = await fetchCalcofiContext(zipCode);
+      } catch (error) {
+        console.error("Failed to fetch CalCOFI context:", error);
+        calcofiError =
+          error instanceof Error
+            ? error.message
+            : "Unknown CalCOFI error (calcofi-fetch-v2)";
+        setSubmissionError(
+          "CalCOFI context could not be loaded. Continuing with intake-only results.",
+        );
+      }
+    }
+
+    navigate("/results", {
+      state: {
+        submission: {
+          ...formData,
+          calcofiContext,
+          calcofiError: calcofiError || undefined,
+          calcofiClientVersion,
+        },
+      },
+    });
   };
 
   const handleAdvanceOnEnter = (event) => {
@@ -702,6 +781,7 @@ function QuestionsPage() {
         <button
           type="button"
           onClick={handleBack}
+          disabled={isSubmitting}
           className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65"
         >
           Edit upload step
@@ -709,11 +789,16 @@ function QuestionsPage() {
         <button
           type="button"
           onClick={handleProcessCase}
-          className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105"
+          disabled={isSubmitting}
+          className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          Process Case
+          {isSubmitting ? "Processing..." : "Process Case"}
         </button>
       </div>
+
+      {submissionError ? (
+        <p className="mt-4 text-sm font-medium text-amber-700">{submissionError}</p>
+      ) : null}
     </div>
   );
 

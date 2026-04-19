@@ -7,4 +7,18 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.js",
   },
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: false,
+    watch: {
+      ignored: ["**/.venv/**", "**/CalCOFI Data/**", "**/models/**", "**/*.ipynb"],
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:8787",
+        changeOrigin: true,
+      },
+    },
+  },
 });

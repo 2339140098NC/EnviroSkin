@@ -45,6 +45,50 @@ const fallbackEnvironmentalContext = {
   },
 };
 
+function formatCalcofiForPreview(calcofiContext) {
+  if (!calcofiContext) {
+    return null;
+  }
+
+  return {
+    location: {
+      zipCode: calcofiContext.query?.zipCode || null,
+      city: calcofiContext.geocode?.city || null,
+      state: calcofiContext.geocode?.state || null,
+      lat: calcofiContext.geocode?.lat ?? null,
+      lon: calcofiContext.geocode?.lon ?? null,
+    },
+    relevance: {
+      rankBy: calcofiContext.query?.rankBy || null,
+      targetDate: calcofiContext.query?.targetDate || null,
+      sampleCount: calcofiContext.summary?.sampleCount ?? null,
+      minDistanceKm: calcofiContext.summary?.minDistanceKm ?? null,
+      minLagDays: calcofiContext.summary?.minLagDays ?? null,
+    },
+    oceanSignals: {
+      avgTempC: calcofiContext.summary?.avgTempC ?? null,
+      avgSalinity: calcofiContext.summary?.avgSalinity ?? null,
+      avgOxygenUmolKg: calcofiContext.summary?.avgOxygenUmolKg ?? null,
+      avgNitrate: calcofiContext.summary?.avgNitrate ?? null,
+      avgChlorophyll: calcofiContext.summary?.avgChlorophyll ?? null,
+    },
+    closestLocation: calcofiContext.bestObservation
+      ? {
+          observedAtUtc: calcofiContext.bestObservation.observedAtUtc,
+          stationId: calcofiContext.bestObservation.stationId,
+          distanceKm: calcofiContext.bestObservation.distanceKm,
+          lagDays: calcofiContext.bestObservation.lagDays,
+          depthM: calcofiContext.bestObservation.depthM,
+          tempC: calcofiContext.bestObservation.tempC,
+          salinity: calcofiContext.bestObservation.salinity,
+          oxygenUmolKg: calcofiContext.bestObservation.oxygenUmolKg,
+          nitrateEst: calcofiContext.bestObservation.nitrateEst,
+          chlorophyllEst: calcofiContext.bestObservation.chlorophyllEst,
+        }
+      : null,
+  };
+}
+
 function buildWhyFlagged(submission, environmentalContext) {
   const bullets = [
     "Your image pattern is currently being treated as more consistent with irritation than a clearly infectious process.",
@@ -175,6 +219,7 @@ function ResultsPage() {
         ? JSON.stringify(
             {
               ...submission,
+              calcofiContext: formatCalcofiForPreview(submission.calcofiContext),
               uploadedImageFile: submission.uploadedImageFile
                 ? {
                     name: submission.uploadedImageFile.name,
