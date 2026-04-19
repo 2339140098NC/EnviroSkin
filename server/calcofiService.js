@@ -235,8 +235,6 @@ export async function queryCalcofiContext({
   maxDistanceKm = 300,
   maxResults = 100,
   windowDays = 180,
-  observationsLimit = 3,
-  includeObservations = false,
   rankBy = "balanced",
 }) {
   const geocode = await geocodeZip(zipCode);
@@ -319,8 +317,6 @@ export async function queryCalcofiContext({
       windowDays,
       maxResults,
       rankBy,
-      includeObservations,
-      observationsLimit,
     },
     geocode,
     summary,
@@ -342,23 +338,5 @@ export async function queryCalcofiContext({
           chlorophyllEst: best.chlorophyllEst,
         }
       : null,
-    observations: includeObservations
-      ? top.slice(0, observationsLimit).map((row) => ({
-          sourceFile: row.sourceFile,
-          castId: row.castId,
-          stationId: row.stationId,
-          observedAtUtc: new Date(row.observedAtUtc).toISOString(),
-          lat: row.lat,
-          lon: row.lon,
-          distanceKm: Number(row.distanceKm.toFixed(2)),
-          lagDays: row.lagDays,
-          depthM: row.depthM,
-          tempC: row.tempC,
-          salinity: row.salinity,
-          oxygenUmolKg: row.oxygenUmolKg,
-          nitrateEst: row.nitrateEst,
-          chlorophyllEst: row.chlorophyllEst,
-        }))
-      : undefined,
   };
 }

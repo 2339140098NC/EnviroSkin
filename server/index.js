@@ -48,8 +48,6 @@ app.get("/api/calcofi/context", async (req, res) => {
   const targetDate = String(req.query.date || "").trim() || undefined;
   const rankByRaw = String(req.query.rankBy || "balanced").trim().toLowerCase();
   const rankBy = ["balanced", "closest", "recent"].includes(rankByRaw) ? rankByRaw : "balanced";
-  const includeObservations = parseBoolean(req.query.includeObservations, false);
-  const observationsLimit = parsePositiveInt(req.query.observationsLimit, 3);
   const maxResults = parsePositiveInt(req.query.maxResults, 100);
   const windowDays = parsePositiveInt(req.query.windowDays, 180);
   const maxDistanceKm = parsePositiveNumber(req.query.maxDistanceKm, 300);
@@ -63,8 +61,6 @@ app.get("/api/calcofi/context", async (req, res) => {
       zipCode,
       targetDate,
       rankBy,
-      includeObservations,
-      observationsLimit,
       maxResults,
       windowDays,
       maxDistanceKm,
