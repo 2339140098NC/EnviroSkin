@@ -79,6 +79,85 @@ button {
   z-index: 2;
 }
 
+@property --questionnaire-glow-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.questionnaire-border-glow {
+  border-radius: 2rem;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.questionnaire-border-glow__content {
+  border-radius: calc(2rem - 1px);
+}
+
+.questionnaire-border-glow__aura,
+.questionnaire-border-glow__beam,
+.questionnaire-border-glow__edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.questionnaire-border-glow__aura {
+  inset: -14px;
+  border-radius: 2.25rem;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(96, 165, 250, 0.34), transparent 36%),
+    radial-gradient(circle at 102% 44%, rgba(45, 212, 191, 0.3), transparent 32%),
+    radial-gradient(circle at 42% 110%, rgba(59, 130, 246, 0.2), transparent 44%);
+  filter: blur(26px);
+  opacity: 0.96;
+}
+
+.questionnaire-border-glow__beam {
+  inset: 0;
+  border-radius: 2rem;
+  padding: 2.5px;
+  background:
+    conic-gradient(
+      from var(--questionnaire-glow-angle),
+      rgba(14, 165, 233, 0) 0deg,
+      rgba(59, 130, 246, 0.28) 52deg,
+      rgba(56, 189, 248, 0.8) 116deg,
+      rgba(45, 212, 191, 0.92) 156deg,
+      rgba(125, 211, 252, 0.24) 208deg,
+      rgba(14, 165, 233, 0) 270deg,
+      rgba(59, 130, 246, 0.28) 328deg,
+      rgba(14, 165, 233, 0) 360deg
+    );
+  opacity: 0.95;
+  animation: questionnaire-border-glow-spin 6.5s linear infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.questionnaire-border-glow__edge {
+  border-radius: 2rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 0 0 1px rgba(103, 210, 255, 0.14),
+    0 12px 38px rgba(59, 130, 246, 0.1),
+    0 0 28px rgba(45, 212, 191, 0.08);
+}
+
+@keyframes questionnaire-border-glow-spin {
+  to {
+    --questionnaire-glow-angle: 360deg;
+  }
+}
+
 @layer utilities {
   /* TODO: replace temporary glass surface values with finalized design tokens */
   .glass-panel {

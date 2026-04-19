@@ -96,4 +96,19 @@ describe("QuestionsPage keyboard progression", () => {
       screen.getByRole("heading", { name: "When did it start?" }),
     ).toBeInTheDocument();
   });
+
+  test("pressing Enter on a selected single-select option advances to the next step", async () => {
+    renderQuestionsPage();
+
+    const zipCodeInput = await answerZipCode("92093");
+    await userEvent.type(zipCodeInput, "{enter}");
+
+    const selectedOption = screen.getByRole("button", { name: "Within days" });
+    await userEvent.click(selectedOption);
+    await userEvent.type(selectedOption, "{enter}");
+
+    expect(
+      screen.getByRole("heading", { name: "How has it changed over time?" }),
+    ).toBeInTheDocument();
+  });
 });

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BorderGlow from "../components/BorderGlow";
 import QuestionOption from "../components/QuestionOption";
 import { initialFormData, intakeSteps, OTHER_OPTION } from "../data/questions";
 
@@ -382,6 +383,44 @@ function QuestionsPage() {
     }
   };
 
+  const handleQuestionnaireCardKeyDown = (event) => {
+    // TODO: confirm keyboard advance behavior on all question types
+    // TODO: verify Enter key behavior does not conflict with textarea inputs
+    if (event.key !== "Enter" || event.nativeEvent.isComposing || isComplete) {
+      return;
+    }
+
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    if (target.closest("textarea")) {
+      return;
+    }
+
+    if (
+      target.closest(
+        "input:not([type='button']):not([type='submit']), [data-enter-behavior='native']",
+      )
+    ) {
+      return;
+    }
+
+    const isQuestionOption = Boolean(target.closest("[data-question-option='true']"));
+    const isUploadAction = Boolean(target.closest("[data-upload-step-action='true']"));
+
+    if ((step.options && isQuestionOption) || (step.type === "upload" && isUploadAction)) {
+      if (!isCurrentStepValid()) {
+        return;
+      }
+
+      event.preventDefault();
+      handleNext();
+    }
+  };
+
   const renderSupplementalFields = () => {
     if (step.type === "upload") {
       return null;
@@ -545,6 +584,7 @@ function QuestionsPage() {
           }}
           onDragLeave={() => setIsDraggingFile(false)}
           onDrop={handleDrop}
+          data-upload-step-action="true"
           className={`flex w-full flex-col items-center justify-center rounded-[1.75rem] border-2 border-dashed px-6 py-12 text-center transition ${
             isDraggingFile
               ? "border-cyan-300 bg-white/75"
@@ -695,54 +735,53 @@ function QuestionsPage() {
 
 
 
-        {/* <section className="glass-panel relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10"> */}
-        <section className="glass-panel relative overflow-hidden rounded-[2rem] p-6 shadow-[0_0_80px_rgba(59,130,246,0.22)] sm:p-8 lg:p-10">                                                                                                                                          
-  <div className="relative z-10">
-    <div className="flex flex-col gap-6 border-b border-white/35 pb-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-            Quick EnviroSkin Intake
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            Answers help contextualize the skin analysis.
-          </h1>
-        </div>
-        <div className="glass-surface rounded-full px-4 py-2 text-sm font-semibold text-slate-700">
-          {isComplete
-            ? "Review complete"
-            : step.type === "upload"
-              ? `Final step of ${visibleSteps.length}`
-              : `Question ${currentStep + 1} of ${visibleSteps.length}`}
-        </div>
-      </div>
+        <BorderGlow
+          className="p-6 sm:p-8 lg:p-10"
+          onKeyDown={handleQuestionnaireCardKeyDown}
+        >
+          <div className="flex flex-col gap-6 border-b border-white/35 pb-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+                  Quick EnviroSkin Intake
+                </p>
+                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+                  Answers help contextualize the skin analysis.
+                </h1>
+              </div>
+              <div className="glass-surface rounded-full px-4 py-2 text-sm font-semibold text-slate-700">
+                {isComplete
+                  ? "Review complete"
+                  : step.type === "upload"
+                    ? `Final step of ${visibleSteps.length}`
+                    : `Question ${currentStep + 1} of ${visibleSteps.length}`}
+              </div>
+            </div>
 
-      <p className="max-w-2xl text-base leading-7 text-slate-600">
-        Provide timing, symptoms, exposure history, medication context, and a
-        skin photo so EnviroSkin can organize a richer case for downstream
-        review and prediction.
-      </p>
+            <p className="max-w-2xl text-base leading-7 text-slate-600">
+              Provide timing, symptoms, exposure history, medication context, and a
+              skin photo so EnviroSkin can organize a richer case for downstream
+              review and prediction.
+            </p>
 
-      <div className="h-2 overflow-hidden rounded-full bg-white/55">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-teal transition-all duration-300"
-          style={{ width: `${isComplete ? 100 : progress}%` }}
-        />
-      </div>
-    </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white/55">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-teal transition-all duration-300"
+                style={{ width: `${isComplete ? 100 : progress}%` }}
+              />
+            </div>
+          </div>
 
-    {!isComplete ? (
-      step.type === "upload"
-        ? renderUploadStep()
-        : step.type === "text"
-          ? renderTextStep()
-          : renderQuestionStep()
-    ) : (
-      renderReviewStep()
-    )}
-  </div>
-</section>
-
+          {!isComplete ? (
+            step.type === "upload"
+              ? renderUploadStep()
+              : step.type === "text"
+                ? renderTextStep()
+                : renderQuestionStep()
+          ) : (
+            renderReviewStep()
+          )}
+        </BorderGlow>
 
       </div>
     </div>
