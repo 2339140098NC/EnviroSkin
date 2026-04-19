@@ -15,7 +15,6 @@ const uploadStep = {
 };
 
 const acceptedFileTypes = ["image/jpeg", "image/png", "image/webp"];
-const ANALYZE_TIMEOUT_MS = 45000;
 
 function formatAnswer(value) {
   if (Array.isArray(value)) {
@@ -446,15 +445,22 @@ function QuestionsPage() {
       .trim()
       .replace(/\/$/, "");
     const relativePath = "/api/analyze";
-    const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-    const hostFallbackBaseUrl = `${protocol}//${window.location.hostname}:8000`;
-
-    return [
+    const candidates = [
       configuredAnalyzeBaseUrl ? `${configuredAnalyzeBaseUrl}${relativePath}` : relativePath,
-      `${hostFallbackBaseUrl}${relativePath}`,
-      "http://localhost:8000/api/analyze",
-      "http://127.0.0.1:8000/api/analyze",
-    ].filter((value, index, array) => value && array.indexOf(value) === index);
+    ];
+
+    if (import.meta.env.DEV) {
+      const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+      const hostFallbackBaseUrl = `${protocol}//${window.location.hostname}:8000`;
+
+      candidates.push(
+        `${hostFallbackBaseUrl}${relativePath}`,
+        "http://localhost:8000/api/analyze",
+        "http://127.0.0.1:8000/api/analyze",
+      );
+    }
+
+    return candidates.filter((value, index, array) => value && array.indexOf(value) === index);
   };
 
   const postAnalyzeRequest = async (payload) => {
@@ -462,19 +468,11 @@ function QuestionsPage() {
     const failedAttempts = [];
 
     for (const url of endpointCandidates) {
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => {
-        controller.abort();
-      }, ANALYZE_TIMEOUT_MS);
-
       try {
         const response = await fetch(url, {
           method: "POST",
           body: payload,
-          signal: controller.signal,
         });
-
-        window.clearTimeout(timeoutId);
 
         if (!response.ok) {
           const detail = await readErrorDetail(response);
@@ -492,15 +490,8 @@ function QuestionsPage() {
 
         return await response.json();
       } catch (error) {
-        window.clearTimeout(timeoutId);
-
         if (error instanceof Error && error.nonRetryable) {
           throw error;
-        }
-
-        if (error instanceof Error && error.name === "AbortError") {
-          failedAttempts.push(`${url} -> Request timed out after ${ANALYZE_TIMEOUT_MS / 1000}s`);
-          continue;
         }
 
         const message = error instanceof Error ? error.message : "Network error";
