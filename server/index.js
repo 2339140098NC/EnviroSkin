@@ -4,6 +4,41 @@ import { loadCalcofiData, queryCalcofiContext } from "./calcofiService.js";
 
 const app = express();
 const PORT = process.env.PORT || 8787;
+const SUPPORTED_TRANSLATION_LANGUAGES = new Set([
+  "es",
+  "fr",
+  "it",
+  "ko",
+  "zh",
+  "ar",
+  "sg",
+  "so",
+  "st",
+  "pt",
+]);
+
+async function translateText(text, targetLanguage) {
+  const response = await fetch(
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(
+      targetLanguage,
+    )}&dt=t&q=${encodeURIComponent(text)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Translation request failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const translated = Array.isArray(payload?.[0])
+    ? payload[0].map((part) => part?.[0] || "").join("")
+    : "";
+
+  if (!translated) {
+    throw new Error("No translated text returned");
+  }
+
+  return translated;
+}
 
 function parsePositiveInt(value, fallback) {
   const n = Number.parseInt(String(value ?? ""), 10);
@@ -68,6 +103,56 @@ app.get("/api/calcofi/context", async (req, res) => {
 
     console.log("CalCOFI context result:\n", JSON.stringify(context, null, 2));
     return res.json(context);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/translate", async (req, res) => {
+  const target = String(req.query.target || "").trim().toLowerCase();
+  const text = String(req.query.text || "").trim();
+
+  if (!SUPPORTED_TRANSLATION_LANGUAGES.has(target)) {
+    return res.status(400).json({ error: "Unsupported target language" });
+  }
+
+  if (!text) {
+    return res.status(400).json({ error: "text query param is required" });
+  }
+
+  try {
+    const translatedText = await translateText(text, target);
+    return res.json({ translatedText });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/translate/batch", async (req, res) => {
+  const target = String(req.body?.target || "").trim().toLowerCase();
+  const texts = Array.isArray(req.body?.texts)
+    ? req.body.texts.filter((value) => typeof value === "string" && value.trim().length > 0)
+    : [];
+
+  if (!SUPPORTED_TRANSLATION_LANGUAGES.has(target)) {
+    return res.status(400).json({ error: "Unsupported target language" });
+  }
+
+  if (texts.length === 0) {
+    return res.status(400).json({ error: "texts must be a non-empty string array" });
+  }
+
+  try {
+    const uniqueTexts = [...new Set(texts)];
+    const translated = {};
+
+    await Promise.all(
+      uniqueTexts.map(async (text) => {
+        translated[text] = await translateText(text, target);
+      }),
+    );
+
+    return res.json({ translated });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
