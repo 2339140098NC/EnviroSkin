@@ -1,3 +1,7 @@
 google-genai
 Pillow
 requests
+fastapi
+uvicorn
+python-dotenv
+python-multipart
