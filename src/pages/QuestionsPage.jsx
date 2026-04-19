@@ -798,12 +798,8 @@ function QuestionsPage() {
         </p>
       </div>
 
-      <div className="glass-surface mt-6 rounded-[1.75rem] p-6">
-        <h3 className="text-lg font-semibold text-ink">Structured response preview</h3>
-        <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
-{payloadPreview}
-        </pre>
-      </div>
+  
+     
 
       <div className="mt-6 grid gap-3">
         {reviewItems.map((item) => (

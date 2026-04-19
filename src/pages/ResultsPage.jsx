@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import ResultsBorderGlow from "../components/ResultsBorderGlow";
+import UVMap from "../components/maps/UVMap";
+import AirPollutionMap from "../components/maps/AirPollutionMap";
 
 function formatCalcofiForPreview(calcofiContext) {
   if (!calcofiContext) {
@@ -325,13 +327,8 @@ function ResultsPage() {
                       Dedicated space for a future UV intensity map or heat layer.
                     </p>
                   </div>
-                  <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_35%),linear-gradient(135deg,_#eff6ff,_#f8fafc_55%,_#e0f2fe)] px-6 text-center">
-                    <div>
-                      <p className="text-base font-semibold text-ink">Map placeholder</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Use this panel for a UV map focused on the user&apos;s current location.
-                      </p>
-                    </div>
+                  <div className="relative h-72 w-full overflow-hidden">
+                    <UVMap zipCode={submission?.zipCode} />
                   </div>
                 </article>
 
@@ -364,13 +361,8 @@ function ResultsPage() {
                       Dedicated space for AQI layers, plume overlays, or station-based markers.
                     </p>
                   </div>
-                  <div className="flex h-72 items-center justify-center bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.18),_transparent_35%),linear-gradient(135deg,_#ecfeff,_#f8fafc_55%,_#f0fdfa)] px-6 text-center">
-                    <div>
-                      <p className="text-base font-semibold text-ink">Map placeholder</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Use this panel for local air quality context around the intake location.
-                      </p>
-                    </div>
+                  <div className="relative h-72 w-full overflow-hidden">
+                    <AirPollutionMap zipCode={submission?.zipCode} />
                   </div>
                 </article>
                 <article className="glass-surface relative min-h-[18rem] overflow-hidden rounded-[1.5rem] p-6">
