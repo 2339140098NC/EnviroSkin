@@ -2,3 +2,6 @@ node_modules/
 dist/
 .DS_Store
 *.log
+.env
+projectdoc.md
+skinwatch_pipeline.md
