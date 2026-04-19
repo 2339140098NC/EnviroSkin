@@ -28,6 +28,22 @@ Run the frontend test suite:
 npm test
 ```
 
+## API services
+
+This app uses two backends:
+
+- `server/index.js` on port `8787` for CalCOFI and translation endpoints
+- `agent/server.py` on port `8000` for `/api/analyze`
+
+In local development, Vite proxies `/api/analyze` to `http://localhost:8000` and other `/api/*` routes to `http://localhost:8787`.
+
+If production routing differs from the defaults, set:
+
+```bash
+VITE_API_BASE_URL=https://your-express-api.example.com
+VITE_ANALYZE_API_BASE_URL=https://your-fastapi-api.example.com
+```
+
 ## Local model download
 
 Download the Hugging Face model into the repo once:

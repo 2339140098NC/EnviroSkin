@@ -15,6 +15,7 @@ const uploadStep = {
 };
 
 const acceptedFileTypes = ["image/jpeg", "image/png", "image/webp"];
+const ANALYZE_TIMEOUT_MS = 45000;
 
 function formatAnswer(value) {
   if (Array.isArray(value)) {
@@ -45,6 +46,32 @@ function UploadIcon() {
       />
     </svg>
   );
+}
+
+async function readErrorDetail(response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const payload = await response.json().catch(() => null);
+
+    if (typeof payload?.detail === "string") {
+      return payload.detail;
+    }
+
+    if (payload?.detail) {
+      return JSON.stringify(payload.detail);
+    }
+
+    if (typeof payload?.error === "string") {
+      return payload.error;
+    }
+
+    if (payload?.error) {
+      return JSON.stringify(payload.error);
+    }
+  }
+
+  return (await response.text().catch(() => "")).trim() || "Unknown server error";
 }
 
 function InputField({
@@ -414,6 +441,76 @@ function QuestionsPage() {
     throw new Error(`Unable to fetch CalCOFI context. Tried: ${failedAttempts.join("; ")}`);
   };
 
+  const getAnalyzeEndpointCandidates = () => {
+    const configuredAnalyzeBaseUrl = (import.meta.env.VITE_ANALYZE_API_BASE_URL || "")
+      .trim()
+      .replace(/\/$/, "");
+    const relativePath = "/api/analyze";
+    const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+    const hostFallbackBaseUrl = `${protocol}//${window.location.hostname}:8000`;
+
+    return [
+      configuredAnalyzeBaseUrl ? `${configuredAnalyzeBaseUrl}${relativePath}` : relativePath,
+      `${hostFallbackBaseUrl}${relativePath}`,
+      "http://localhost:8000/api/analyze",
+      "http://127.0.0.1:8000/api/analyze",
+    ].filter((value, index, array) => value && array.indexOf(value) === index);
+  };
+
+  const postAnalyzeRequest = async (payload) => {
+    const endpointCandidates = getAnalyzeEndpointCandidates();
+    const failedAttempts = [];
+
+    for (const url of endpointCandidates) {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => {
+        controller.abort();
+      }, ANALYZE_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          body: payload,
+          signal: controller.signal,
+        });
+
+        window.clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const detail = await readErrorDetail(response);
+          const message = `Server ${response.status}: ${detail}`;
+
+          if (response.status >= 500 || response.status === 429) {
+            failedAttempts.push(`${url} -> ${message}`);
+            continue;
+          }
+
+          const error = new Error(message);
+          error.nonRetryable = true;
+          throw error;
+        }
+
+        return await response.json();
+      } catch (error) {
+        window.clearTimeout(timeoutId);
+
+        if (error instanceof Error && error.nonRetryable) {
+          throw error;
+        }
+
+        if (error instanceof Error && error.name === "AbortError") {
+          failedAttempts.push(`${url} -> Request timed out after ${ANALYZE_TIMEOUT_MS / 1000}s`);
+          continue;
+        }
+
+        const message = error instanceof Error ? error.message : "Network error";
+        failedAttempts.push(`${url} -> ${message}`);
+      }
+    }
+
+    throw new Error(`Unable to reach analysis service. Tried: ${failedAttempts.join("; ")}`);
+  };
+
   const handleProcessCase = async () => {
     if (isSubmitting) {
       return;
@@ -457,24 +554,19 @@ function QuestionsPage() {
         JSON.stringify({ ...formForApi, calcofiContext }),
       );
       payload.append("image", imageFile);
-
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        body: payload,
-      });
-
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(`Server ${response.status}: ${detail}`);
-      }
-
-      analysis = await response.json();
+      analysis = await postAnalyzeRequest(payload);
     } catch (error) {
       console.error("Analysis request failed:", error);
       analysisError =
         error instanceof Error ? error.message : "Unknown analysis error";
+      const isTemporaryCapacityIssue =
+        /Server 503|Server 429|temporarily overloaded|rate-limited/i.test(analysisError);
+      const userFacingError = isTemporaryCapacityIssue
+        ? `Analysis is temporarily unavailable due to model capacity. ${analysisError}`
+        : `Analysis unavailable. ${analysisError}`;
+
       setSubmissionError(
-        `Analysis unavailable. ${analysisError}. Make sure the FastAPI server is running.`,
+        `${userFacingError}.`,
       );
       setIsSubmitting(false);
       return;

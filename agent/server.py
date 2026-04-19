@@ -2,6 +2,7 @@ import io
 import json
 import os
 import sys
+import time
 import traceback
 from pathlib import Path
 
@@ -43,6 +44,9 @@ DRIVER_KEYS = [
     "water_conditions",
     "plant_exposure",
 ]
+MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL_RETRY_ATTEMPTS = 3
+MODEL_RETRY_DELAYS_SECONDS = [1.0, 2.0]
 
 
 def _clamp(value, minimum, maximum):
@@ -164,6 +168,55 @@ def _normalize_analysis(payload: dict, environmental_context: dict | None = None
         "environmental_context": environmental_context or {},
     }
 
+
+def _extract_upstream_error(exc: Exception) -> tuple[int, str]:
+    message = str(exc).strip() or type(exc).__name__
+    normalized = message.upper()
+
+    if "503" in normalized or "UNAVAILABLE" in normalized or "HIGH DEMAND" in normalized:
+        return (
+            503,
+            "The analysis model is temporarily overloaded. Please try again in a moment.",
+        )
+
+    if "429" in normalized or "RESOURCE_EXHAUSTED" in normalized or "RATE LIMIT" in normalized:
+        return (
+            429,
+            "The analysis service is rate-limited right now. Please try again shortly.",
+        )
+
+    if "401" in normalized or "403" in normalized or "API KEY" in normalized:
+        return (
+            502,
+            "The analysis service could not authenticate with the upstream model provider.",
+        )
+
+    return (502, f"Upstream model request failed: {message}")
+
+
+def _generate_analysis(pil: Image.Image, context: str):
+    last_error = None
+
+    for attempt in range(MODEL_RETRY_ATTEMPTS):
+        try:
+            return client.models.generate_content(
+                model=MODEL_NAME,
+                config={"system_instruction": SYSTEM_PROMPT},
+                contents=[pil, context],
+            )
+        except Exception as exc:
+            last_error = exc
+            status_code, _detail = _extract_upstream_error(exc)
+            should_retry = status_code in {429, 503} and attempt < MODEL_RETRY_ATTEMPTS - 1
+
+            if not should_retry:
+                raise
+
+            delay_seconds = MODEL_RETRY_DELAYS_SECONDS[min(attempt, len(MODEL_RETRY_DELAYS_SECONDS) - 1)]
+            time.sleep(delay_seconds)
+
+    raise last_error
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -205,15 +258,11 @@ async def analyze(form_data: str = Form(...), image: UploadFile = File(...)):
             "noaa_uv": noaa_uv.fetch(form.get("zipCode", "")),
             "epa_aqi": epa_aqi.fetch(form.get("zipCode", "")),
         }
-
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            config={"system_instruction": SYSTEM_PROMPT},
-            contents=[pil, context],
-        )
+        response = _generate_analysis(pil, context)
     except Exception as exc:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}")
+        status_code, detail = _extract_upstream_error(exc)
+        raise HTTPException(status_code=status_code, detail=detail)
 
     text = (response.text or "").strip()
     if text.startswith("```"):
