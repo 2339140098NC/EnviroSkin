@@ -358,11 +358,14 @@ function ResultsPage() {
                       {t("UV Exposure")}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {t("Nearby NOAA and EPA UV readings centered on the intake ZIP code.")}
+                      {t("NOAA daytime UV levels shown as an hourly trend from 8 AM to 8 PM.")}
                     </p>
                   </div>
                   <div className="relative h-72 w-full overflow-hidden">
-                    <UVMap zipCode={submission?.zipCode} />
+                    <UVMap
+                      zipCode={submission?.zipCode}
+                      noaaUv={analysis?.environmental_context?.noaa_uv}
+                    />
                   </div>
                 </article>
 
