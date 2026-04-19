@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { loadCalcofiData, queryCalcofiContext } from "./calcofiService.js";
+import { queryNearbyUvPoints } from "./uvService.js";
 
 const app = express();
 const PORT = process.env.PORT || 8787;
@@ -103,6 +104,21 @@ app.get("/api/calcofi/context", async (req, res) => {
 
     console.log("CalCOFI context result:\n", JSON.stringify(context, null, 2));
     return res.json(context);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/uv/points", async (req, res) => {
+  const zipCode = String(req.query.zip || "").trim();
+
+  if (!/^\d{5}$/.test(zipCode)) {
+    return res.status(400).json({ error: "zip query param must be a 5-digit US ZIP code" });
+  }
+
+  try {
+    const payload = await queryNearbyUvPoints({ zipCode });
+    return res.json(payload);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

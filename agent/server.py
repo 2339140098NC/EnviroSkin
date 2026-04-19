@@ -19,6 +19,7 @@ sys.path.insert(0, str(REPO_ROOT))
 load_dotenv(REPO_ROOT / ".env")
 
 from env.context_builder import build_context
+from env.fetchers import noaa_uv
 from skin_classify import classify
 
 SYSTEM_PROMPT = (AGENT_DIR / "system_prompt.md").read_text()
@@ -96,7 +97,7 @@ def _normalize_driver_entry(raw_entry):
     }
 
 
-def _normalize_analysis(payload: dict) -> dict:
+def _normalize_analysis(payload: dict, environmental_context: dict | None = None) -> dict:
     if not isinstance(payload, dict):
         raise HTTPException(status_code=502, detail="Model output is not a JSON object")
 
@@ -160,6 +161,7 @@ def _normalize_analysis(payload: dict) -> dict:
         "environmental_factors": environmental_factors,
         "next_steps": next_steps,
         "voice_narration_text": voice,
+        "environmental_context": environmental_context or {},
     }
 
 app = FastAPI()
@@ -199,6 +201,9 @@ async def analyze(form_data: str = Form(...), image: UploadFile = File(...)):
     try:
         scores = classify(pil, top_k=4)
         context = build_context(form, scores)
+        environmental_context = {
+            "noaa_uv": noaa_uv.fetch(form.get("zipCode", "")),
+        }
 
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -217,6 +222,6 @@ async def analyze(form_data: str = Form(...), image: UploadFile = File(...)):
 
     try:
         parsed = json.loads(text)
-        return _normalize_analysis(parsed)
+        return _normalize_analysis(parsed, environmental_context=environmental_context)
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail={"raw": response.text})

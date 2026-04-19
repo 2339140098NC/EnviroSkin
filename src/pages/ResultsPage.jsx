@@ -136,6 +136,16 @@ function ResultsPage() {
     [submission, analysis, t],
   );
 
+  const noaaUvPreview = useMemo(
+    () =>
+      JSON.stringify(
+        translateJsonValues(analysis?.environmental_context?.noaa_uv || null, t),
+        null,
+        2,
+      ),
+    [analysis?.environmental_context?.noaa_uv, t],
+  );
+
   if (!submission) {
     return (
       <div className="min-h-screen bg-transparent px-6 py-12">
@@ -345,10 +355,10 @@ function ResultsPage() {
                 <article className="glass-surface overflow-hidden rounded-[1.5rem]">
                   <div className="border-b border-white/40 px-5 py-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-                      {t("UV Exposure Map")}
+                      {t("UV Exposure")}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {t("Dedicated space for a future UV intensity map or heat layer.")}
+                      {t("Nearby NOAA and EPA UV readings centered on the intake ZIP code.")}
                     </p>
                   </div>
                   <div className="relative h-72 w-full overflow-hidden">
@@ -451,9 +461,19 @@ function ResultsPage() {
             </div>
 
             {showPayload ? (
-              <pre className="mt-5 max-h-[28rem] overflow-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
+              <>
+                <pre className="mt-5 max-h-[28rem] overflow-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
 {payloadPreview}
-              </pre>
+                </pre>
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    {t("NOAA UV Context")}
+                  </p>
+                  <pre className="mt-3 overflow-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
+{noaaUvPreview}
+                  </pre>
+                </div>
+              </>
             ) : null}
           </section>
         </ResultsBorderGlow>
