@@ -3,13 +3,18 @@ import os
 from transformers import pipeline
 
 
-DEFAULT_MODEL_ID = "LaurianeMD/vit-skin-disease"
+REMOTE_MODEL_ID = "LaurianeMD/vit-skin-disease"
+LOCAL_MODEL_DIR = "models/lauriane-vit-skin-disease"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run skin-condition inference with a Hugging Face model.")
     parser.add_argument("--image", default="skin.jpg", help="Path to input skin image.")
-    parser.add_argument("--model", default=DEFAULT_MODEL_ID, help="Hugging Face model id.")
+    parser.add_argument(
+        "--model",
+        default=LOCAL_MODEL_DIR,
+        help="Local model directory or Hugging Face model id.",
+    )
     parser.add_argument("--top-k", type=int, default=5, help="How many predictions to print.")
     return parser.parse_args()
 
@@ -20,10 +25,15 @@ def main() -> None:
     if not os.path.exists(args.image):
         raise FileNotFoundError(f"Image not found: {args.image}")
 
-    classifier = pipeline("image-classification", model=args.model)
+    model_ref = args.model
+    # If default local path is missing, fallback to remote HF model id.
+    if model_ref == LOCAL_MODEL_DIR and not os.path.isdir(model_ref):
+        model_ref = REMOTE_MODEL_ID
+
+    classifier = pipeline("image-classification", model=model_ref)
     predictions = classifier(args.image, top_k=args.top_k)
 
-    print(f"Model: {args.model}")
+    print(f"Model: {model_ref}")
     print(f"Image: {args.image}")
     print("Predictions:")
     for pred in predictions:
