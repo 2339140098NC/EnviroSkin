@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
+import ResultsBorderGlow from "./ResultsBorderGlow";
 
 function HeroImagePreview() {
   return (
     <div className="relative mx-auto w-full max-w-2xl">
-      <div className="glass-panel rounded-[2.5rem] p-4 sm:p-5">
+      <ResultsBorderGlow className="rounded-[2.5rem] p-4 sm:p-5">
         <div className="overflow-hidden rounded-[2.1rem] bg-[rgba(232,242,248,0.74)]">
           <img
             src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80"
@@ -11,7 +12,7 @@ function HeroImagePreview() {
             className="h-[420px] w-full object-cover object-center sm:h-[450px]"
           />
         </div>
-      </div>
+      </ResultsBorderGlow>
     </div>
   );
 }
