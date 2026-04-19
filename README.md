@@ -1,5 +1,6 @@
 # Enviro-Skin
-NI HAO
+
+Environment-aware skin triage web app. Upload a photo plus location/context, and a Gemini-backed agent returns a triage level, likely causes, and environment-informed guidance.
 
 ## Frontend development
 
