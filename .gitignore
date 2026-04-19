@@ -3,5 +3,7 @@ dist/
 .DS_Store
 *.log
 .env
+.venv
 projectdoc.md
 skinwatch_pipeline.md
+SkinDisease/SkinDisease/
