@@ -73,7 +73,7 @@ Return **ONLY** a JSON object. No markdown, no code fences, no text before or af
       "explanation": "One plain sentence on how air quality relates."
     },
     "heat_and_humidity": {
-      "value": "short label like '84°F and 71% humidity' or 'Not available'",
+      "value": "short label like '84 F and 71% humidity' or 'Not available'",
       "explanation": "One plain sentence on how heat/humidity relates."
     },
     "water_conditions": {
