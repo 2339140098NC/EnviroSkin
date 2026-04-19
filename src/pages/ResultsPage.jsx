@@ -361,7 +361,7 @@ function ResultsPage() {
                       {t("NOAA daytime UV levels shown as an hourly trend from 8 AM to 8 PM.")}
                     </p>
                   </div>
-                  <div className="relative h-72 w-full overflow-hidden">
+                  <div className="relative h-[370px] w-full overflow-hidden">
                     <UVMap
                       zipCode={submission?.zipCode}
                       noaaUv={analysis?.environmental_context?.noaa_uv}
