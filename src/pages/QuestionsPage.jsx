@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import QuestionOption from "../components/QuestionOption";
 import { intakeSteps } from "../data/questions";
 
@@ -70,7 +70,110 @@ function UploadIcon() {
   );
 }
 
+function InputField({ label, value, onChange, placeholder, multiline = false }) {
+  const baseClassName =
+    "mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100";
+
+  return (
+    <label className="mt-5 block">
+      <span className="text-sm font-medium text-slate-600">{label}</span>
+      {multiline ? (
+        <textarea
+          rows="4"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={`${baseClassName} resize-none`}
+        />
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={baseClassName}
+        />
+      )}
+    </label>
+  );
+}
+
+function isOtherSelected(step, value) {
+  if (!step.otherTextField) {
+    return false;
+  }
+
+  if (step.type === "multi") {
+    return Array.isArray(value) && value.includes(OTHER_OPTION);
+  }
+
+  return value === OTHER_OPTION;
+}
+
+function sanitizeFormData(nextFormData) {
+  const sanitizedFormData = { ...nextFormData };
+
+  intakeSteps.forEach((step) => {
+    const value = sanitizedFormData[step.field];
+
+    if (step.otherTextField && !isOtherSelected(step, value)) {
+      sanitizedFormData[step.otherTextField] = initialFormData[step.otherTextField];
+    }
+
+    if (step.followUpField && value !== "Yes") {
+      sanitizedFormData[step.followUpField] = initialFormData[step.followUpField];
+    }
+
+    if (step.isVisible && !step.isVisible(sanitizedFormData)) {
+      sanitizedFormData[step.field] = initialFormData[step.field];
+
+      if (step.otherTextField) {
+        sanitizedFormData[step.otherTextField] = initialFormData[step.otherTextField];
+      }
+    }
+  });
+
+  return sanitizedFormData;
+}
+
+function formatStepAnswer(step, formData) {
+  if (step.type === "upload") {
+    return formData.uploadedImageName || "No image uploaded";
+  }
+
+  const value = formData[step.field];
+
+  if (step.type === "multi") {
+    if (!Array.isArray(value) || value.length === 0) {
+      return "Not provided";
+    }
+
+    const parts = value.filter((item) => item !== OTHER_OPTION);
+
+    if (value.includes(OTHER_OPTION) && formData[step.otherTextField]) {
+      parts.push(`Other: ${formData[step.otherTextField]}`);
+    }
+
+    return parts.join(", ");
+  }
+
+  if (!value) {
+    return "Not provided";
+  }
+
+  if (value === OTHER_OPTION && step.otherTextField && formData[step.otherTextField]) {
+    return `Other: ${formData[step.otherTextField]}`;
+  }
+
+  if (value === "Yes" && step.followUpField && formData[step.followUpField]) {
+    return `Yes - ${formData[step.followUpField]}`;
+  }
+
+  return value;
+}
+
 function QuestionsPage() {
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const previewUrlRef = useRef("");
   const [currentStep, setCurrentStep] = useState(0);
@@ -88,19 +191,36 @@ function QuestionsPage() {
   }, [formData]);
 
   const step = visibleSteps[currentStep];
-  const currentValue = formData[step.key];
+  const currentValue =
+    step.type === "upload" ? formData.uploadedImageFile : formData[step.field];
   const progress = ((currentStep + 1) / visibleSteps.length) * 100;
 
-  const intakeSummary = useMemo(
+  const reviewItems = useMemo(
     () =>
-      visibleSteps.map(({ key, prompt, type }) => ({
-        prompt,
-        answer:
-          type === "upload"
-            ? formData.uploadedImageName || "No image selected"
-            : formatAnswer(formData[key]),
+      visibleSteps.map((stepConfig) => ({
+        prompt: stepConfig.prompt,
+        answer: formatStepAnswer(stepConfig, formData),
       })),
     [formData, visibleSteps],
+  );
+
+  const payloadPreview = useMemo(
+    () =>
+      JSON.stringify(
+        {
+          ...formData,
+          uploadedImageFile: formData.uploadedImageFile
+            ? {
+                name: formData.uploadedImageFile.name,
+                type: formData.uploadedImageFile.type,
+                size: formData.uploadedImageFile.size,
+              }
+            : null,
+        },
+        null,
+        2,
+      ),
+    [formData],
   );
 
   useEffect(() => {
@@ -118,16 +238,25 @@ function QuestionsPage() {
   }, []);
 
   const isCurrentStepValid = () => {
-    if (!step) {
+    if (step.type === "upload") {
+      return Boolean(formData.uploadedImageFile);
+    }
+
+    const hasBaseAnswer =
+      step.type === "multi"
+        ? Array.isArray(currentValue) && currentValue.length > 0
+        : Boolean(currentValue);
+
+    if (step.required && !hasBaseAnswer) {
       return false;
     }
 
-    if (step.type === "multi") {
-      return Array.isArray(currentValue) && currentValue.length > 0;
+    if (step.otherTextField && isOtherSelected(step, currentValue)) {
+      return Boolean(formData[step.otherTextField].trim());
     }
 
-    if (step.type === "upload") {
-      return Boolean(formData.uploadedImageFile);
+    if (step.followUpField && currentValue === "Yes" && step.followUpRequired !== false) {
+      return Boolean(formData[step.followUpField].trim());
     }
 
     if (step.type === "text") {
@@ -158,22 +287,32 @@ function QuestionsPage() {
         nextFormData.medicationTypes = [];
       }
 
-      return nextFormData;
-    });
+  const handleSingleSelect = (value) => {
+    updateFormData((previous) => ({
+      ...previous,
+      [step.field]: value,
+    }));
   };
 
   const handleMultiSelect = (value) => {
-    setFormData((previous) => {
-      const currentItems = previous[step.key];
+    updateFormData((previous) => {
+      const currentItems = previous[step.field];
       const nextItems = currentItems.includes(value)
         ? currentItems.filter((item) => item !== value)
         : [...currentItems, value];
 
       return {
         ...previous,
-        [step.key]: nextItems,
+        [step.field]: nextItems,
       };
     });
+  };
+
+  const handleTextChange = (field, value) => {
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   };
 
   const updateUploadedImage = (file) => {
@@ -256,19 +395,59 @@ function QuestionsPage() {
     setCurrentStep((previous) => Math.max(previous - 1, 0));
   };
 
-  const stepLabel =
-    step?.type === "upload"
-      ? `Final step of ${visibleSteps.length}`
-      : `Question ${currentStep + 1} of ${visibleSteps.length}`;
+  const handleProcessCase = () => {
+    navigate("/results", { state: { submission: formData } });
+  };
+
+  const renderSupplementalFields = () => {
+    if (step.type === "upload") {
+      return null;
+    }
+
+    const fields = [];
+
+    if (step.otherTextField && isOtherSelected(step, currentValue)) {
+      fields.push(
+        <InputField
+          key={step.otherTextField}
+          label="Please share your answer."
+          value={formData[step.otherTextField]}
+          onChange={(event) => handleTextChange(step.otherTextField, event.target.value)}
+          placeholder="Add a few words so we can capture the context clearly."
+          multiline={step.type === "multi"}
+        />,
+      );
+    }
+
+    if (step.followUpField && currentValue === "Yes") {
+      fields.push(
+        <InputField
+          key={step.followUpField}
+          label={step.followUpPrompt}
+          value={formData[step.followUpField]}
+          onChange={(event) => handleTextChange(step.followUpField, event.target.value)}
+          placeholder={
+            step.followUpRequired === false
+              ? "Optional detail that may help interpret the case."
+              : "Add any detail that may help interpret the exposure safely."
+          }
+          multiline
+        />,
+      );
+    }
+
+    return fields;
+  };
 
   const renderQuestionStep = () => (
     <div className="pt-8">
-      <h2 className="text-2xl font-semibold tracking-tight text-ink">
-        {step.prompt}
-      </h2>
+      <h2 className="text-2xl font-semibold tracking-tight text-ink">{step.prompt}</h2>
       {step.subtitle ? (
-        <p className="mt-3 text-base leading-7 text-slate-600">{step.subtitle}</p>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+          {step.subtitle}
+        </p>
       ) : null}
+
       <div className="mt-6 grid gap-3">
         {step.options.map((option) => {
           const isSelected =
@@ -291,6 +470,8 @@ function QuestionsPage() {
         })}
       </div>
 
+      {renderSupplementalFields()}
+
       <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <button
           type="button"
@@ -306,7 +487,7 @@ function QuestionsPage() {
           disabled={!isCurrentStepValid()}
           className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          {step.type === "upload" ? "Complete Intake" : "Next"}
+          Next
         </button>
       </div>
     </div>
@@ -405,7 +586,7 @@ function QuestionsPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Selected file</p>
-                <p className="mt-1 text-base font-semibold text-ink">
+                <p className="mt-1 break-all text-base font-semibold text-ink">
                   {formData.uploadedImageName}
                 </p>
               </div>
@@ -454,7 +635,57 @@ function QuestionsPage() {
           disabled={!isCurrentStepValid()}
           className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
-          Complete Intake
+          Next
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderReviewStep = () => (
+    <div className="pt-8">
+      <div className="rounded-[1.75rem] border border-teal/70 bg-gradient-to-br from-[#effcf9] to-[#dff8f2] p-6">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink">
+          Review intake before processing
+        </h2>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+          Confirm the case details, photo, and structured payload before EnviroSkin
+          moves to prediction results.
+        </p>
+      </div>
+
+      <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-6">
+        <h3 className="text-lg font-semibold text-ink">Structured response preview</h3>
+        <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
+{payloadPreview}
+        </pre>
+      </div>
+
+      <div className="mt-6 grid gap-3">
+        {reviewItems.map((item) => (
+          <div
+            key={item.prompt}
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-4"
+          >
+            <p className="text-sm font-medium text-slate-500">{item.prompt}</p>
+            <p className="mt-1 text-base font-semibold text-ink">{item.answer}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        >
+          Edit upload step
+        </button>
+        <button
+          type="button"
+          onClick={handleProcessCase}
+          className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
+        >
+          Process Case
         </button>
       </div>
     </div>
@@ -487,14 +718,18 @@ function QuestionsPage() {
                 </h1>
               </div>
               <div className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600">
-                {isComplete ? "Review complete" : stepLabel}
+                {isComplete
+                  ? "Review complete"
+                  : step.type === "upload"
+                    ? `Final step of ${visibleSteps.length}`
+                    : `Question ${currentStep + 1} of ${visibleSteps.length}`}
               </div>
             </div>
 
             <p className="max-w-2xl text-base leading-7 text-slate-600">
-              Provide recent exposure, symptom, and medication context, then add
-              a skin photo so the final payload is ready for backend and LLM
-              workflows.
+              Provide timing, symptoms, exposure history, medication context, and a
+              skin photo so EnviroSkin can organize a richer case for downstream
+              review and prediction.
             </p>
 
             <div className="h-2 overflow-hidden rounded-full bg-slate-100">
