@@ -20,10 +20,10 @@ function HowItWorksSection() {
   return (
     <section
       id="how-it-works"
-      className="mx-auto max-w-7xl px-6 pb-20 lg:px-10 lg:pb-28"
+      className="relative mx-auto max-w-7xl px-6 pb-20 lg:px-10 lg:pb-28"
     >
-      <div className="absolute left-0 top-0 h-72 w-7c v2 rounded-full bg-blue-300/40 blur-[120px]" />
-      <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/75 p-8 shadow-card backdrop-blur-xl sm:p-10">
+      <div className="pointer-events-none absolute left-0 top-0 h-72 w-72 rounded-full bg-cyan-200/35 blur-[120px]" />
+      <div className="glass-panel relative overflow-hidden rounded-[2rem] p-8 sm:p-10">
         <div className="relative z-10 max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
             Workflow
@@ -37,9 +37,9 @@ function HowItWorksSection() {
           {steps.map((step, index) => (
             <article
               key={step.title}
-              className="rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-6 shadow-sm"
+              className="glass-surface rounded-[1.75rem] p-6"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-600">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/65 text-sm font-semibold text-blue-700 shadow-sm">
                 0{index + 1}
               </div>
               <h3 className="mt-5 text-xl font-semibold tracking-tight text-ink">

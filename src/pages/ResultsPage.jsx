@@ -192,7 +192,7 @@ function ResultsPage() {
   if (!submission) {
     return (
       <div className="min-h-screen bg-transparent px-6 py-12">
-        <div className="mx-auto max-w-3xl rounded-[2rem] border border-white/80 bg-white/85 p-8 shadow-soft backdrop-blur-xl">
+        <div className="glass-panel mx-auto max-w-3xl rounded-[2rem] p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
             Prediction Results
           </p>
@@ -205,7 +205,7 @@ function ResultsPage() {
           </p>
           <Link
             to="/questions"
-            className="mt-8 inline-flex rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
+            className="glass-button mt-8 inline-flex rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105"
           >
             Start Intake
           </Link>
@@ -268,20 +268,20 @@ function ResultsPage() {
           <div className="flex gap-3">
             <Link
               to="/questions"
-              className="rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur"
+              className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700"
             >
               Edit Intake
             </Link>
             <Link
               to="/"
-              className="rounded-full bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
+              className="glass-button rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
             >
               Return Home
             </Link>
           </div>
         </div>
 
-        <section className="rounded-[2rem] border border-white/80 bg-white/85 p-6 shadow-soft backdrop-blur-xl sm:p-8 lg:p-10">
+        <section className="glass-panel rounded-[2rem] p-6 sm:p-8 lg:p-10">
           <header className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
               Prediction Results
@@ -294,7 +294,7 @@ function ResultsPage() {
             </p>
           </header>
 
-          <div className="mx-auto mt-10 max-w-5xl rounded-[2rem] border border-slate-200 bg-[#fbfdff] p-6 shadow-card sm:p-8">
+          <div className="glass-surface mx-auto mt-10 max-w-5xl rounded-[2rem] p-6 sm:p-8">
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
@@ -304,7 +304,7 @@ function ResultsPage() {
                   {prediction.name}
                 </h2>
 
-                <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="glass-surface mt-8 rounded-[1.5rem] p-5">
                   <div className="flex items-end justify-between gap-4">
                     <div>
                       <p className="text-sm font-medium text-slate-500">Confidence</p>
@@ -316,7 +316,7 @@ function ResultsPage() {
                       Confidence: {confidencePercent}%
                     </p>
                   </div>
-                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/55">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-blue-500 via-sky-500 to-teal"
                       style={{ width: `${confidencePercent}%` }}
@@ -324,7 +324,7 @@ function ResultsPage() {
                   </div>
                 </div>
 
-                <section className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                <section className="glass-surface mt-8 rounded-[1.5rem] p-5">
                   <h3 className="text-lg font-semibold tracking-tight text-ink">
                     Why this was flagged
                   </h3>
@@ -340,12 +340,12 @@ function ResultsPage() {
               </div>
 
               <div>
-                <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="glass-surface rounded-[1.75rem] p-5">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                     Uploaded Image
                   </p>
                   {imageUrl ? (
-                    <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 shadow-sm">
+                    <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/45 bg-white/45 shadow-sm backdrop-blur-xl">
                       <img
                         src={imageUrl}
                         alt="Uploaded skin preview"
@@ -353,7 +353,7 @@ function ResultsPage() {
                       />
                     </div>
                   ) : (
-                    <div className="mt-5 rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                    <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/45 bg-white/45 px-6 py-12 text-center backdrop-blur-xl">
                       <p className="text-sm leading-6 text-slate-500">
                         No uploaded image preview is available.
                       </p>
@@ -367,7 +367,7 @@ function ResultsPage() {
             </div>
           </div>
 
-          <section className="mx-auto mt-8 max-w-5xl rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+          <section className="glass-surface mx-auto mt-8 max-w-5xl rounded-[1.75rem] p-5 sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-ink">
@@ -383,7 +383,7 @@ function ResultsPage() {
               {insightSections.map((section) => (
                 <section
                   key={section.title}
-                  className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
+                  className="glass-surface rounded-[1.5rem] p-5"
                 >
                   <h3 className="text-lg font-semibold tracking-tight text-ink">
                     {section.title}
@@ -401,7 +401,7 @@ function ResultsPage() {
             </div>
           </section>
 
-          <section className="mx-auto mt-8 max-w-5xl rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+          <section className="glass-surface mx-auto mt-8 max-w-5xl rounded-[1.75rem] p-5 sm:p-6">
             <h2 className="text-xl font-semibold tracking-tight text-ink">
               Environmental Drivers
             </h2>
@@ -410,8 +410,8 @@ function ResultsPage() {
             </p>
             <div className="mt-5 space-y-5">
               <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                <article className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-200 px-5 py-4">
+                <article className="glass-surface overflow-hidden rounded-[1.5rem]">
+                  <div className="border-b border-white/40 px-5 py-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
                       UV Exposure Map
                     </p>
@@ -429,7 +429,7 @@ function ResultsPage() {
                   </div>
                 </article>
 
-                <article className="min-h-[18rem] rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+                <article className="glass-surface min-h-[18rem] rounded-[1.5rem] p-6">
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
                     {environmentalDrivers[0].name}
                   </p>
@@ -443,8 +443,8 @@ function ResultsPage() {
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                <article className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-                  <div className="border-b border-slate-200 px-5 py-4">
+                <article className="glass-surface overflow-hidden rounded-[1.5rem]">
+                  <div className="border-b border-white/40 px-5 py-4">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
                       Air Quality Map
                     </p>
@@ -462,7 +462,7 @@ function ResultsPage() {
                   </div>
                 </article>
 
-                <article className="min-h-[18rem] rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+                <article className="glass-surface min-h-[18rem] rounded-[1.5rem] p-6">
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
                     {environmentalDrivers[2].name}
                   </p>
@@ -481,7 +481,7 @@ function ResultsPage() {
                   .map((driver) => (
                     <article
                       key={driver.name}
-                      className="min-h-[15rem] rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm"
+                      className="glass-surface min-h-[15rem] rounded-[1.5rem] p-6"
                     >
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
                         {driver.name}
@@ -498,7 +498,7 @@ function ResultsPage() {
             </div>
           </section>
 
-          <section className="mx-auto mt-8 max-w-5xl rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+          <section className="glass-surface mx-auto mt-8 max-w-5xl rounded-[1.75rem] p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-ink">
@@ -511,7 +511,7 @@ function ResultsPage() {
               <button
                 type="button"
                 onClick={() => setShowPayload((current) => !current)}
-                className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-white/65"
               >
                 {showPayload ? "Hide Data" : "Show Data"}
               </button>

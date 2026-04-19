@@ -53,7 +53,7 @@ function InputField({
   multiline = false,
 }) {
   const baseClassName =
-    "mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100";
+    "glass-surface mt-3 w-full rounded-2xl px-4 py-3 text-base text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100/70";
 
   return (
     <label className="mt-5 block">
@@ -462,7 +462,7 @@ function QuestionsPage() {
           type="button"
           onClick={handleBack}
           disabled={currentStep === 0}
-          className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>
@@ -470,7 +470,7 @@ function QuestionsPage() {
           type="button"
           onClick={handleNext}
           disabled={!isCurrentStepValid()}
-          className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
           Next
         </button>
@@ -494,7 +494,7 @@ function QuestionsPage() {
           onKeyDown={handleAdvanceOnEnter}
           placeholder={step.placeholder || ""}
           inputMode={step.field === "zipCode" ? "numeric" : "text"}
-          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-lg text-ink shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="glass-surface-strong w-full rounded-2xl px-5 py-4 text-lg text-ink transition focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100"
         />
       </div>
 
@@ -503,7 +503,7 @@ function QuestionsPage() {
           type="button"
           onClick={handleBack}
           disabled={currentStep === 0}
-          className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>
@@ -511,7 +511,7 @@ function QuestionsPage() {
           type="button"
           onClick={handleNext}
           disabled={!isCurrentStepValid()}
-          className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
           Next
         </button>
@@ -528,7 +528,7 @@ function QuestionsPage() {
         {step.subtitle}
       </p>
 
-      <div className="mt-8 rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-5 sm:p-6">
+      <div className="glass-surface mt-8 rounded-[1.75rem] p-5 sm:p-6">
         <input
           ref={fileInputRef}
           type="file"
@@ -547,11 +547,11 @@ function QuestionsPage() {
           onDrop={handleDrop}
           className={`flex w-full flex-col items-center justify-center rounded-[1.75rem] border-2 border-dashed px-6 py-12 text-center transition ${
             isDraggingFile
-              ? "border-blue-400 bg-blue-50/60"
-              : "border-slate-300 bg-white hover:border-blue-300 hover:bg-blue-50/30"
+              ? "border-cyan-300 bg-white/75"
+              : "border-white/50 bg-white/55 hover:border-cyan-200 hover:bg-white/68"
           }`}
         >
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+          <div className="glass-surface flex h-20 w-20 items-center justify-center rounded-full text-blue-700">
             <UploadIcon />
           </div>
           <p className="mt-6 text-xl font-semibold tracking-tight text-ink">
@@ -568,7 +568,7 @@ function QuestionsPage() {
         ) : null}
 
         {formData.uploadedImageName ? (
-          <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-4 sm:p-5">
+          <div className="glass-surface mt-6 rounded-[1.5rem] p-4 sm:p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Selected file</p>
@@ -580,14 +580,14 @@ function QuestionsPage() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                  className="glass-button-secondary rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white/65"
                 >
                   Replace
                 </button>
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+                  className="rounded-full border border-rose-200/80 bg-white/55 px-4 py-2 text-sm font-semibold text-rose-600 backdrop-blur-xl transition hover:bg-rose-50/70"
                 >
                   Remove
                 </button>
@@ -595,7 +595,7 @@ function QuestionsPage() {
             </div>
 
             {formData.uploadedImagePreviewUrl ? (
-              <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-slate-50">
+              <div className="mt-5 overflow-hidden rounded-[1.25rem] border border-white/50 bg-white/45 backdrop-blur-xl">
                 <img
                   src={formData.uploadedImagePreviewUrl}
                   alt="Selected skin upload preview"
@@ -611,7 +611,7 @@ function QuestionsPage() {
         <button
           type="button"
           onClick={handleBack}
-          className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+          className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65"
         >
           Back
         </button>
@@ -619,7 +619,7 @@ function QuestionsPage() {
           type="button"
           onClick={handleNext}
           disabled={!isCurrentStepValid()}
-          className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
         >
           Next
         </button>
@@ -629,7 +629,7 @@ function QuestionsPage() {
 
   const renderReviewStep = () => (
     <div className="pt-8">
-      <div className="rounded-[1.75rem] border border-teal/70 bg-gradient-to-br from-[#effcf9] to-[#dff8f2] p-6">
+      <div className="glass-surface-strong rounded-[1.75rem] p-6">
         <h2 className="text-2xl font-semibold tracking-tight text-ink">
           Review intake before processing
         </h2>
@@ -639,7 +639,7 @@ function QuestionsPage() {
         </p>
       </div>
 
-      <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-[#fbfdff] p-6">
+      <div className="glass-surface mt-6 rounded-[1.75rem] p-6">
         <h3 className="text-lg font-semibold text-ink">Structured response preview</h3>
         <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm leading-7 text-slate-100">
 {payloadPreview}
@@ -650,7 +650,7 @@ function QuestionsPage() {
         {reviewItems.map((item) => (
           <div
             key={item.prompt}
-            className="rounded-2xl border border-slate-200 bg-white px-5 py-4"
+            className="glass-surface rounded-2xl px-5 py-4"
           >
             <p className="text-sm font-medium text-slate-500">{item.prompt}</p>
             <p className="mt-1 text-base font-semibold text-ink">{item.answer}</p>
@@ -662,14 +662,14 @@ function QuestionsPage() {
         <button
           type="button"
           onClick={handleBack}
-          className="rounded-full border border-slate-200 px-6 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          className="glass-button-secondary rounded-full px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-white/65"
         >
           Edit upload step
         </button>
         <button
           type="button"
           onClick={handleProcessCase}
-          className="rounded-full bg-blue-500 px-7 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
+          className="glass-button rounded-full px-7 py-3 text-base font-semibold text-white transition hover:brightness-105"
         >
           Process Case
         </button>
@@ -686,56 +686,64 @@ function QuestionsPage() {
           </Link>
           <Link
             to="/"
-            className="rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur"
+            className="glass-button-secondary rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700"
           >
             Back to Home
           </Link>
         </div>
 
-        <section className="rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-soft backdrop-blur-xl sm:p-8 lg:p-10">
-          <div className="flex flex-col gap-6 border-b border-slate-200 pb-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-                  Quick EnviroSkin Intake
-                </p>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-                  Answers help contextualize the skin analysis.
-                </h1>
-              </div>
-              <div className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600">
-                {isComplete
-                  ? "Review complete"
-                  : step.type === "upload"
-                    ? `Final step of ${visibleSteps.length}`
-                    : `Question ${currentStep + 1} of ${visibleSteps.length}`}
-              </div>
-            </div>
 
-            <p className="max-w-2xl text-base leading-7 text-slate-600">
-              Provide timing, symptoms, exposure history, medication context, and a
-              skin photo so EnviroSkin can organize a richer case for downstream
-              review and prediction.
-            </p>
 
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-teal transition-all duration-300"
-                style={{ width: `${isComplete ? 100 : progress}%` }}
-              />
-            </div>
-          </div>
 
-          {!isComplete ? (
-            step.type === "upload"
-              ? renderUploadStep()
-              : step.type === "text"
-                ? renderTextStep()
-                : renderQuestionStep()
-          ) : (
-            renderReviewStep()
-          )}
-        </section>
+        {/* <section className="glass-panel relative overflow-hidden rounded-[2rem] p-6 sm:p-8 lg:p-10"> */}
+        <section className="glass-panel relative overflow-hidden rounded-[2rem] p-6 shadow-[0_0_80px_rgba(59,130,246,0.22)] sm:p-8 lg:p-10">                                                                                                                                          
+  <div className="relative z-10">
+    <div className="flex flex-col gap-6 border-b border-white/35 pb-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+            Quick EnviroSkin Intake
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+            Answers help contextualize the skin analysis.
+          </h1>
+        </div>
+        <div className="glass-surface rounded-full px-4 py-2 text-sm font-semibold text-slate-700">
+          {isComplete
+            ? "Review complete"
+            : step.type === "upload"
+              ? `Final step of ${visibleSteps.length}`
+              : `Question ${currentStep + 1} of ${visibleSteps.length}`}
+        </div>
+      </div>
+
+      <p className="max-w-2xl text-base leading-7 text-slate-600">
+        Provide timing, symptoms, exposure history, medication context, and a
+        skin photo so EnviroSkin can organize a richer case for downstream
+        review and prediction.
+      </p>
+
+      <div className="h-2 overflow-hidden rounded-full bg-white/55">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-teal transition-all duration-300"
+          style={{ width: `${isComplete ? 100 : progress}%` }}
+        />
+      </div>
+    </div>
+
+    {!isComplete ? (
+      step.type === "upload"
+        ? renderUploadStep()
+        : step.type === "text"
+          ? renderTextStep()
+          : renderQuestionStep()
+    ) : (
+      renderReviewStep()
+    )}
+  </div>
+</section>
+
+
       </div>
     </div>
   );

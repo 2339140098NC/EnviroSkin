@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 
 function Navbar() {
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-white/35 bg-white/20 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
         <Link to="/" className="flex items-center gap-3 text-3xl font-semibold tracking-tight text-ink">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+          <span className="glass-surface flex h-10 w-10 items-center justify-center rounded-2xl text-blue-700">
             <svg
               aria-hidden="true"
               className="h-5 w-5"
@@ -20,7 +20,7 @@ function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             to="/questions"
-            className="rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
+            className="glass-button rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:brightness-105"
           >
             Get Started
           </Link>

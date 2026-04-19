@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 function HeroImagePreview() {
   return (
     <div className="relative mx-auto w-full max-w-2xl">
-      <div className="rounded-[2.5rem] border border-white/80 bg-white/70 p-4 shadow-soft backdrop-blur-xl sm:p-5">
-        <div className="overflow-hidden rounded-[2.1rem] bg-[#edf4f8]">
+      <div className="glass-panel rounded-[2.5rem] p-4 sm:p-5">
+        <div className="overflow-hidden rounded-[2.1rem] bg-[rgba(232,242,248,0.74)]">
           <img
             src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80"
             alt="Close-up portrait preview for EnviroSkin"
@@ -21,10 +21,10 @@ function HeroSection() {
     <section className="relative overflow-hidden translate-y-[-2rem]">
       <div className="mx-auto grid max-w-7xl gap-16 px-6 py-16 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-10 lg:py-24">
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full bg-teal px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-900 shadow-sm">
+          <div className="glass-surface inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-slate-900">
             <span
               aria-hidden="true"
-              className="h-2.5 w-2.5 rounded-full bg-slate-900"
+              className="h-2.5 w-2.5 rounded-full bg-cyan-700"
             />
             Instant AI Analysis
           </div>
@@ -42,13 +42,13 @@ function HeroSection() {
           <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
             <Link
               to="/questions"
-              className="rounded-full bg-blue-500 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-600"
+              className="glass-button rounded-full px-8 py-4 text-lg font-semibold text-white transition hover:brightness-105"
             >
               Begin Assessment
             </Link>
             <a
               href="#how-it-works"
-              className="inline-flex items-center gap-3 text-lg font-semibold text-blue-600 transition hover:text-blue-700"
+              className="glass-surface inline-flex items-center gap-3 rounded-full px-5 py-3 text-lg font-semibold text-blue-700 transition hover:bg-white/60"
             >
               How it works
               <span aria-hidden="true" className="text-2xl">
